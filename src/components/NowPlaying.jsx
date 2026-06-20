@@ -119,14 +119,15 @@ export default function NowPlaying() {
 
             {nowPlayingTab === 'art' && (
               coverUrl && !hasError ? (
-              <img 
-                src={coverUrl} 
-                alt="Cover" 
-                className="w-full h-full object-cover" 
-                onError={() => setHasError(true)}
-              />
-            ) : (
-              <PulsarLogo className="w-32 h-32 text-primary opacity-50" />
+                <img 
+                  src={coverUrl} 
+                  alt="Cover" 
+                  className="w-full h-full object-cover" 
+                  onError={() => setHasError(true)}
+                />
+              ) : (
+                <PulsarLogo className="w-32 h-32 text-primary opacity-50" />
+              )
             )}
           </div>
 

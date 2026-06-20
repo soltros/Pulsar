@@ -13,6 +13,7 @@ import AlbumView from './pages/AlbumView';
 import PlaylistView from './pages/PlaylistView';
 import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
+import NowPlaying from './components/NowPlaying';
 
 function Sidebar() {
   const pinnedPlaylists = useSettingsStore(state => state.pinnedPlaylists);
@@ -99,7 +100,7 @@ function TopBar({ onOpenSettings }) {
 }
 
 function PlayerBar() {
-  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek } = usePlayerStore();
+  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
 
   const formatTime = (seconds) => {
@@ -118,16 +119,19 @@ function PlayerBar() {
 
   return (
     <div className="fixed bottom-[60px] md:bottom-0 left-0 right-0 h-20 bg-black/60 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-4 z-50">
-      <div className="flex items-center gap-4 w-1/4 min-w-[180px]">
-        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5 flex items-center justify-center">
+      <div 
+        className="flex items-center gap-4 w-1/4 min-w-[180px] cursor-pointer group"
+        onClick={() => setIsNowPlayingOpen(true)}
+      >
+        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5 flex items-center justify-center group-hover:shadow-primary/20 transition-all">
           {currentTrack ? (
-            <img src={getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200)} alt="Cover" className="w-full h-full object-cover" />
+            <img src={getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200)} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
           ) : (
             <PulsarLogo className="w-6 h-6 text-white/20" />
           )}
         </div>
         <div className="flex-1 overflow-hidden">
-          <h4 className="text-white font-medium text-sm truncate hover:underline cursor-pointer">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h4>
+          <h4 className="text-white font-medium text-sm truncate group-hover:text-primary transition-colors">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h4>
           <p className="text-white/50 text-xs truncate">{currentTrack ? currentTrack.artist : ''}</p>
         </div>
       </div>
@@ -275,6 +279,7 @@ function App() {
       </main>
 
       <GlobalAudioPlayer />
+      <NowPlaying />
       <PlayerBar />
       <MobileNav />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

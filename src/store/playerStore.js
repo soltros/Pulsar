@@ -8,8 +8,10 @@ export const usePlayerStore = create((set, get) => ({
   progress: 0,
   duration: 0,
   audioRef: null,
+  isNowPlayingOpen: false,
 
   setAudioRef: (ref) => set({ audioRef: ref }),
+  setIsNowPlayingOpen: (open) => set({ isNowPlayingOpen: open }),
 
   playTrack: (track, newQueue = null, index = 0) => {
     const queue = newQueue || [track];

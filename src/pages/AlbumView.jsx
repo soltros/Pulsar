@@ -58,9 +58,9 @@ function AlbumTrackRow({ track, index, albumData }) {
       <div className="flex items-center">
         <button 
           onClick={handleStar}
-          className={`p-2 rounded-full transition-colors ${isStarred ? 'text-rose-500' : 'text-white/20 hover:text-white opacity-0 group-hover:opacity-100'}`}
+          className={`p-2 rounded-full ${isStarred ? '' : 'opacity-0 group-hover:opacity-100'}`}
         >
-          <Heart className="w-4 h-4" fill={isStarred ? 'currentColor' : 'none'} />
+          <Heart className={`w-4 h-4 heart-bounce ${isStarred ? 'heart-liked' : 'heart-unliked'}`} fill={isStarred ? 'currentColor' : 'none'} />
         </button>
       </div>
       <div className="flex items-center text-sm text-white/50 w-12 justify-end">
@@ -170,9 +170,9 @@ export default function AlbumView() {
             </button>
             <button 
               onClick={() => useLibraryStore.getState().toggleStar(album.id, !!album.starred, 'album')}
-              className={`mt-4 w-14 h-14 rounded-full transition-colors flex items-center justify-center border ${album.starred ? 'bg-black/20 border-rose-500 text-rose-500' : 'bg-black/20 border-white/20 text-white/50 hover:text-white hover:border-white/50 hover:bg-white/5'}`}
+              className={`mt-4 w-14 h-14 rounded-full flex items-center justify-center border ${album.starred ? 'bg-black/20 border-rose-500' : 'bg-black/20 border-white/20 hover:border-white/50 hover:bg-white/5'}`}
             >
-              <Heart className="w-6 h-6" fill={album.starred ? 'currentColor' : 'none'} />
+              <Heart className={`w-6 h-6 heart-bounce ${album.starred ? 'heart-liked' : 'heart-unliked'}`} fill={album.starred ? 'currentColor' : 'none'} />
             </button>
           </div>
         </div>

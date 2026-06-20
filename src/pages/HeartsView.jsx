@@ -148,9 +148,9 @@ export default function HeartsView() {
                       <div className="flex items-center justify-end gap-4 w-20">
                         <button 
                           onClick={(e) => handleToggleStar(e, track.id, 'song')}
-                          className="text-rose-500 hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
+                          className="opacity-0 group-hover:opacity-100"
                         >
-                          <Heart className="w-4 h-4" fill="currentColor" />
+                          <Heart className="w-4 h-4 heart-bounce heart-liked" fill="currentColor" />
                         </button>
                         <span className="text-sm text-white/50">{formatTime(track.duration)}</span>
                       </div>
@@ -197,9 +197,9 @@ export default function HeartsView() {
                     <div className="flex items-center gap-4 px-4">
                       <button 
                         onClick={(e) => handleToggleStar(e, album.id, 'album')}
-                        className="text-rose-500 hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
+                        className="opacity-0 group-hover:opacity-100"
                       >
-                        <Heart className="w-5 h-5" fill="currentColor" />
+                        <Heart className="w-5 h-5 heart-bounce heart-liked" fill="currentColor" />
                       </button>
                       <button 
                         onClick={(e) => openContextMenu(e, album, 'album')}
@@ -241,9 +241,9 @@ export default function HeartsView() {
                     <div className="flex items-center gap-4 px-4">
                       <button 
                         onClick={(e) => handleToggleStar(e, artist.id, 'artist')}
-                        className="text-rose-500 hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
+                        className="opacity-0 group-hover:opacity-100"
                       >
-                        <Heart className="w-5 h-5" fill="currentColor" />
+                        <Heart className="w-5 h-5 heart-bounce heart-liked" fill="currentColor" />
                       </button>
                       <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white transition-colors" />
                     </div>

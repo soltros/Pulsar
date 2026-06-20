@@ -84,9 +84,9 @@ export function ConnectedAlbumCard({ album, forceLoadArt }) {
               e.stopPropagation();
               useLibraryStore.getState().toggleStar(dbAlbum.id, !!dbAlbum.starred, 'album');
             }}
-            className={`absolute top-2 right-2 p-2 rounded-full transition-all z-20 shadow-md ${dbAlbum.starred ? 'bg-black/40 text-rose-500 backdrop-blur-md' : 'bg-black/20 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 hover:bg-black/40 backdrop-blur-md'}`}
+            className={`absolute top-2 right-2 p-2 rounded-full z-20 shadow-md ${dbAlbum.starred ? 'bg-black/40 backdrop-blur-md' : 'bg-black/20 opacity-0 group-hover:opacity-100 hover:bg-black/40 backdrop-blur-md'}`}
           >
-            <Heart className="w-4 h-4" fill={dbAlbum.starred ? 'currentColor' : 'none'} />
+            <Heart className={`w-4 h-4 heart-bounce ${dbAlbum.starred ? 'heart-liked' : 'heart-unliked'}`} fill={dbAlbum.starred ? 'currentColor' : 'none'} />
           </button>
         </div>
         <h3 className="text-white font-semibold text-sm truncate" title={dbAlbum.name}>{dbAlbum.name}</h3>
@@ -155,9 +155,9 @@ export function SongCard({ song, forceLoadArt }) {
       </div>
       <button 
         onClick={handleStar}
-        className={`absolute right-3 p-2 rounded-full transition-colors ${isStarred ? 'text-rose-500' : 'text-white/20 hover:text-white opacity-0 group-hover:opacity-100 hover:bg-white/10'}`}
+        className={`absolute right-3 p-2 rounded-full ${isStarred ? '' : 'opacity-0 group-hover:opacity-100 hover:bg-white/10'}`}
       >
-        <Heart className="w-4 h-4" fill={isStarred ? 'currentColor' : 'none'} />
+        <Heart className={`w-4 h-4 heart-bounce ${isStarred ? 'heart-liked' : 'heart-unliked'}`} fill={isStarred ? 'currentColor' : 'none'} />
       </button>
     </div>
   );

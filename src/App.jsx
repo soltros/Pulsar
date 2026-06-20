@@ -181,9 +181,9 @@ function PlayerBar() {
               e.stopPropagation();
               useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : false, 'song');
             }}
-            className={`p-2 rounded-full transition-colors ${dbSong?.starred ? 'text-rose-500' : 'text-white/30 hover:text-white'}`}
+            className="p-2 rounded-full"
           >
-            <Heart className="w-5 h-5" fill={dbSong?.starred ? 'currentColor' : 'none'} />
+            <Heart className={`w-5 h-5 heart-bounce ${dbSong?.starred ? 'heart-liked' : 'heart-unliked'}`} fill={dbSong?.starred ? 'currentColor' : 'none'} />
           </button>
         )}
       </div>

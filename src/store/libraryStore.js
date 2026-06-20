@@ -17,6 +17,12 @@ export const useLibraryStore = create((set, get) => ({
     songs: [],
     radios: []
   },
+  contextMenu: { isOpen: false, x: 0, y: 0, target: null, type: null },
+  openContextMenu: (e, target, type) => {
+    e.preventDefault();
+    set({ contextMenu: { isOpen: true, x: e.clientX, y: e.clientY, target, type } });
+  },
+  closeContextMenu: () => set(state => ({ contextMenu: { ...state.contextMenu, isOpen: false } })),
   
   syncLibrary: async () => {
     if (get().isSyncing) return;
@@ -129,6 +135,41 @@ export const useLibraryStore = create((set, get) => ({
     } catch (error) {
       console.error('Library Sync failed:', error);
       set({ isSyncing: false });
+    }
+  },
+
+  toggleStar: async (id, isStarred, type = 'song') => {
+    try {
+      if (isStarred) {
+        await fetchApi('unstar', { [type + 'Id']: id });
+      } else {
+        await fetchApi('star', { [type + 'Id']: id });
+      }
+      
+      // Update IndexedDB optimistic
+      if (type === 'song') {
+        const item = await db.songs.get(id);
+        if (item) await db.songs.update(id, { starred: !isStarred ? new Date().toISOString() : undefined });
+      } else if (type === 'album') {
+        const item = await db.albums.get(id);
+        if (item) await db.albums.update(id, { starred: !isStarred ? new Date().toISOString() : undefined });
+      } else if (type === 'artist') {
+        const item = await db.artists.get(id);
+        if (item) await db.artists.update(id, { starred: !isStarred ? new Date().toISOString() : undefined });
+      }
+
+      // Re-fetch starred specifically to update lists
+      const starredRes = await fetchApi('getStarred2').catch(() => null);
+      if (starredRes) {
+        set(state => ({
+          homeLists: { 
+            ...state.homeLists, 
+            favorites: starredRes.starred2?.album || [] 
+          }
+        }));
+      }
+    } catch (e) {
+      console.error('Toggle star failed', e);
     }
   },
 

@@ -4,9 +4,70 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { fetchApi, getCoverArtUrl } from '../lib/api';
 import { usePlayerStore } from '../store/playerStore';
-import { Play, Clock, Hash, Pause, Calendar } from 'lucide-react';
+import { Play, Clock, Hash, Pause, Calendar, Heart } from 'lucide-react';
 import PulsarLogo from '../components/PulsarLogo';
 import { Link } from 'react-router-dom';
+import { useLibraryStore } from '../store/libraryStore';
+
+function AlbumTrackRow({ track, index, albumData }) {
+  const { playTrack, queue, currentIndex, isPlaying } = usePlayerStore();
+  const dbSong = useLiveQuery(() => db.songs.get(track.id), [track.id]) || track;
+  const toggleStar = useLibraryStore(state => state.toggleStar);
+  
+  const isCurrentAlbumPlaying = queue.length > 0 && albumData?.song && queue[0].albumId === albumData.id;
+  const isTrackPlaying = isCurrentAlbumPlaying && currentIndex === index;
+  const isStarred = !!dbSong.starred;
+
+  const formatTime = (seconds) => {
+    if (!seconds) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleStar = (e) => {
+    e.stopPropagation();
+    toggleStar(dbSong.id, isStarred, 'song');
+  };
+
+  return (
+    <div 
+      onClick={() => playTrack(dbSong, albumData.song, index)}
+      onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbSong, 'song')}
+      className={`grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg cursor-pointer group transition-colors ${
+        isTrackPlaying ? 'bg-white/10' : 'hover:bg-white/5'
+      }`}
+    >
+      <div className="w-8 flex items-center justify-center">
+        {isTrackPlaying && isPlaying ? (
+          <PulsarLogo className="w-4 h-4 text-primary animate-[spin_3s_linear_infinite]" />
+        ) : (
+          <span className="text-sm text-white/50 group-hover:hidden">{dbSong.track || index + 1}</span>
+        )}
+        {(!isTrackPlaying || !isPlaying) && (
+          <Play className="w-4 h-4 text-white hidden group-hover:block" fill="currentColor" />
+        )}
+      </div>
+      <div className="flex flex-col justify-center">
+        <span className={`text-sm font-medium ${isTrackPlaying ? 'text-primary' : 'text-white'}`}>
+          {dbSong.title}
+        </span>
+        <span className="text-xs text-white/50">{dbSong.artist}</span>
+      </div>
+      <div className="flex items-center">
+        <button 
+          onClick={handleStar}
+          className={`p-2 rounded-full transition-colors ${isStarred ? 'text-rose-500' : 'text-white/20 hover:text-white opacity-0 group-hover:opacity-100'}`}
+        >
+          <Heart className="w-4 h-4" fill={isStarred ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+      <div className="flex items-center text-sm text-white/50 w-12 justify-end">
+        {formatTime(dbSong.duration)}
+      </div>
+    </div>
+  );
+}
 
 export default function AlbumView() {
   const { id } = useParams();
@@ -99,12 +160,20 @@ export default function AlbumView() {
             <span className="text-white/70">{album.songCount} tracks</span>
           </div>
           
-          <button 
-            onClick={handlePlayAll}
-            className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
-          >
-            {(isCurrentAlbumPlaying && isPlaying) ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handlePlayAll}
+              className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
+            >
+              {(isCurrentAlbumPlaying && isPlaying) ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
+            </button>
+            <button 
+              onClick={() => useLibraryStore.getState().toggleStar(album.id, !!album.starred, 'album')}
+              className={`mt-4 w-14 h-14 rounded-full transition-colors flex items-center justify-center border ${album.starred ? 'bg-black/20 border-rose-500 text-rose-500' : 'bg-black/20 border-white/20 text-white/50 hover:text-white hover:border-white/50 hover:bg-white/5'}`}
+            >
+              <Heart className="w-6 h-6" fill={album.starred ? 'currentColor' : 'none'} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -119,46 +188,17 @@ export default function AlbumView() {
 
       {/* Tracklist */}
       <div className="p-8">
-        <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
           <div className="w-8 text-center"><Hash className="w-4 h-4 inline" /></div>
           <div>Title</div>
-          <div><Clock className="w-4 h-4 inline" /></div>
+          <div></div>
+          <div className="w-12 text-right"><Clock className="w-4 h-4 inline" /></div>
         </div>
         
         <div className="flex flex-col">
-          {albumData?.song?.map((track, index) => {
-            const isTrackPlaying = isCurrentAlbumPlaying && currentIndex === index;
-            
-            return (
-              <div 
-                key={track.id}
-                onClick={() => playTrack(track, albumData.song, index)}
-                className={`grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-3 rounded-lg cursor-pointer group transition-colors ${
-                  isTrackPlaying ? 'bg-white/10' : 'hover:bg-white/5'
-                }`}
-              >
-                <div className="w-8 flex items-center justify-center">
-                  {isTrackPlaying && isPlaying ? (
-                    <PulsarLogo className="w-4 h-4 text-primary animate-[spin_3s_linear_infinite]" />
-                  ) : (
-                    <span className="text-sm text-white/50 group-hover:hidden">{track.track || index + 1}</span>
-                  )}
-                  {(!isTrackPlaying || !isPlaying) && (
-                    <Play className="w-4 h-4 text-white hidden group-hover:block" fill="currentColor" />
-                  )}
-                </div>
-                <div className="flex flex-col justify-center">
-                  <span className={`text-sm font-medium ${isTrackPlaying ? 'text-primary' : 'text-white'}`}>
-                    {track.title}
-                  </span>
-                  <span className="text-xs text-white/50">{track.artist}</span>
-                </div>
-                <div className="flex items-center text-sm text-white/50">
-                  {formatTime(track.duration)}
-                </div>
-              </div>
-            );
-          })}
+          {albumData?.song?.map((track, index) => (
+            <AlbumTrackRow key={track.id} track={track} index={index} albumData={albumData} />
+          ))}
         </div>
       </div>
     </div>

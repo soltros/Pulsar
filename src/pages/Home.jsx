@@ -1,4 +1,4 @@
-import { Play, Pause, Mic2, ListMusic } from 'lucide-react';
+import { Play, Pause, Mic2, ListMusic, Heart } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -40,17 +40,34 @@ export function ConnectedAlbumCard({ album }) {
   const dbAlbum = useLiveQuery(() => db.albums.get(album.id), [album.id]) || album;
   
   return (
-    <Link to={`/album/${dbAlbum.id}`} className="group cursor-pointer w-full block">
-      <div className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500">
-        <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" />
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
-        <button className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110">
-          <Play fill="currentColor" className="w-5 h-5 ml-1" />
-        </button>
-      </div>
-      <h3 className="text-white font-semibold text-sm truncate" title={dbAlbum.name}>{dbAlbum.name}</h3>
-      <p className="text-white/60 text-xs truncate mt-0.5" title={dbAlbum.artist}>{dbAlbum.artist}</p>
-    </Link>
+    <div className="group cursor-pointer w-full block">
+      <Link to={`/album/${dbAlbum.id}`}>
+        <div 
+          onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbAlbum, 'album')}
+          className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500"
+        >
+          <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" />
+          <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+          <button 
+            className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+          >
+            <Play fill="currentColor" className="w-5 h-5 ml-1" />
+          </button>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              useLibraryStore.getState().toggleStar(dbAlbum.id, !!dbAlbum.starred, 'album');
+            }}
+            className={`absolute top-2 right-2 p-2 rounded-full transition-all z-20 shadow-md ${dbAlbum.starred ? 'bg-black/40 text-rose-500 backdrop-blur-md' : 'bg-black/20 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 hover:bg-black/40 backdrop-blur-md'}`}
+          >
+            <Heart className="w-4 h-4" fill={dbAlbum.starred ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+        <h3 className="text-white font-semibold text-sm truncate" title={dbAlbum.name}>{dbAlbum.name}</h3>
+        <p className="text-white/60 text-xs truncate mt-0.5" title={dbAlbum.artist}>{dbAlbum.artist}</p>
+      </Link>
+    </div>
   );
 }
 
@@ -80,15 +97,23 @@ export function ArtistCard({ artist }) {
 
 export function SongCard({ song }) {
   const { playTrack, currentIndex, queue, isPlaying, togglePlay } = usePlayerStore();
-  const isThisPlaying = queue[currentIndex]?.id === song.id;
+  const dbSong = useLiveQuery(() => db.songs.get(song.id), [song.id]) || song;
+  const isThisPlaying = queue[currentIndex]?.id === dbSong.id;
+  const isStarred = !!dbSong.starred;
+
+  const handleStar = (e) => {
+    e.stopPropagation();
+    useLibraryStore.getState().toggleStar(dbSong.id, isStarred, 'song');
+  };
 
   return (
     <div 
-      className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors"
-      onClick={() => isThisPlaying ? togglePlay() : playTrack(song)}
+      className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors relative"
+      onClick={() => isThisPlaying ? togglePlay() : playTrack(dbSong)}
+      onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbSong, 'song')}
     >
       <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
-        <LazyImage src={getCoverArtUrl(song.coverArt || song.albumId)} className="w-full h-full" alt="" />
+        <LazyImage src={getCoverArtUrl(dbSong.coverArt || dbSong.albumId)} className="w-full h-full" alt="" />
         <button className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           {(isThisPlaying && isPlaying) ? (
             <Pause fill="currentColor" className="w-4 h-4 text-white" />
@@ -97,10 +122,16 @@ export function SongCard({ song }) {
           )}
         </button>
       </div>
-      <div className="flex-1 overflow-hidden">
-        <h3 className="text-white font-semibold text-sm truncate">{song.title}</h3>
-        <p className="text-white/50 text-xs truncate">{song.artist}</p>
+      <div className="flex-1 overflow-hidden pr-8">
+        <h3 className="text-white font-semibold text-sm truncate">{dbSong.title}</h3>
+        <p className="text-white/50 text-xs truncate">{dbSong.artist}</p>
       </div>
+      <button 
+        onClick={handleStar}
+        className={`absolute right-3 p-2 rounded-full transition-colors ${isStarred ? 'text-rose-500' : 'text-white/20 hover:text-white opacity-0 group-hover:opacity-100 hover:bg-white/10'}`}
+      >
+        <Heart className="w-4 h-4" fill={isStarred ? 'currentColor' : 'none'} />
+      </button>
     </div>
   );
 }

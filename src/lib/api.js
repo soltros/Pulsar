@@ -10,8 +10,15 @@ export const getApiUrl = (endpoint, params = {}) => {
     s: salt,
     v: '1.16.1',
     c: 'pulsar',
-    f: 'json',
-    ...params
+    f: 'json'
+  });
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach(val => query.append(key, val));
+    } else if (value !== undefined && value !== null) {
+      query.append(key, value);
+    }
   });
   
   return `${serverUrl}/rest/${endpoint}?${query.toString()}`;

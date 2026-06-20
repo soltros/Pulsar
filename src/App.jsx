@@ -6,7 +6,7 @@ import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
 import { useSettingsStore } from './store/settingsStore';
 import { usePlayerStore } from './store/playerStore';
-import { getCoverArtUrl } from './lib/api';
+import { getCoverArtUrl, fetchApi } from './lib/api';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './lib/db';
 import Login from './components/Login';
@@ -230,6 +230,121 @@ function NavItemMobile({ icon, label, active }) {
   );
 }
 
+function GlobalContextMenu() {
+  const { contextMenu, closeContextMenu } = useLibraryStore();
+  const playlists = useLiveQuery(() => db.playlists.toArray()) || [];
+  const [showPlaylists, setShowPlaylists] = useState(false);
+
+  useEffect(() => {
+    const handleClick = () => {
+      closeContextMenu();
+      setShowPlaylists(false);
+    };
+    if (contextMenu.isOpen) {
+      document.addEventListener('click', handleClick);
+    }
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenu.isOpen, closeContextMenu]);
+
+  if (!contextMenu.isOpen) return null;
+
+  const handleAddToPlaylist = async (e, playlistId) => {
+    e.stopPropagation();
+    try {
+      let songIdsToAdd = [];
+      if (contextMenu.type === 'song') {
+        songIdsToAdd = [contextMenu.target.id];
+      } else if (contextMenu.type === 'album') {
+        const res = await fetchApi('getAlbum', { id: contextMenu.target.id });
+        if (res.album?.song) {
+          songIdsToAdd = res.album.song.map(s => s.id);
+        }
+      }
+
+      if (songIdsToAdd.length > 0) {
+        if (playlistId === 'new') {
+          const name = prompt('Enter new playlist name:');
+          if (name) {
+             const createRes = await fetchApi('createPlaylist', { name });
+             if (createRes.playlist) {
+               await fetchApi('updatePlaylist', { playlistId: createRes.playlist.id, songIdToAdd: songIdsToAdd });
+               alert(`Created and added to ${name}!`);
+             }
+          }
+        } else {
+          await fetchApi('updatePlaylist', { playlistId, songIdToAdd: songIdsToAdd });
+          alert('Added to playlist!');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add to playlist.');
+    } finally {
+      closeContextMenu();
+      setShowPlaylists(false);
+    }
+  };
+
+  // Prevent menu from overflowing screen
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  const menuWidth = 220;
+  const menuHeight = 300; // approximate
+  const x = contextMenu.x + menuWidth > windowWidth ? windowWidth - menuWidth - 10 : contextMenu.x;
+  const y = contextMenu.y + menuHeight > windowHeight ? windowHeight - menuHeight - 10 : contextMenu.y;
+
+  return (
+    <div 
+      className="fixed z-[100] w-56 bg-[#1e2029] border border-white/10 rounded-xl shadow-2xl py-2 overflow-hidden backdrop-blur-xl"
+      style={{ left: x, top: y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-4 py-2 border-b border-white/5 mb-2">
+        <p className="text-xs font-semibold text-white/50 truncate">
+          {contextMenu.target?.title || contextMenu.target?.name || 'Selected Item'}
+        </p>
+      </div>
+
+      {!showPlaylists ? (
+        <>
+          <button 
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors flex justify-between items-center group"
+            onClick={(e) => { e.stopPropagation(); setShowPlaylists(true); }}
+          >
+            <span>Add to Playlist</span>
+            <span className="text-white/30 group-hover:text-white">&rarr;</span>
+          </button>
+        </>
+      ) : (
+        <div className="max-h-64 overflow-y-auto hide-scrollbar">
+          <button 
+            className="w-full text-left px-4 py-2 text-xs text-white/50 hover:bg-white/10 transition-colors"
+            onClick={(e) => { e.stopPropagation(); setShowPlaylists(false); }}
+          >
+            &larr; Back
+          </button>
+          <div className="my-1 border-t border-white/5" />
+          <button 
+            className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-primary/20 transition-colors"
+            onClick={(e) => handleAddToPlaylist(e, 'new')}
+          >
+            + Create New Playlist
+          </button>
+          {playlists.map(p => (
+            <button 
+              key={p.id}
+              className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors truncate"
+              onClick={(e) => handleAddToPlaylist(e, p.id)}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SettingsModal({ isOpen, onClose }) {
   const { lastFmApiKey, setLastFmCredentials } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
@@ -290,6 +405,57 @@ function SettingsModal({ isOpen, onClose }) {
       console.error('Failed to clear cache:', e);
       alert('Failed to clear caches.');
     }
+  };
+
+  const handleExportHearts = async () => {
+    try {
+      const res = await fetchApi('getStarred2');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.starred2, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "pulsar_favorites_export.json");
+      document.body.appendChild(downloadAnchorNode); // required for firefox
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    } catch (e) {
+      alert("Failed to export favorites.");
+    }
+  };
+
+  const handleImportHearts = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async e => {
+      try {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async event => {
+          const data = JSON.parse(event.target.result);
+          if (data.song) {
+            for (let song of data.song) {
+              await fetchApi('star', { id: song.id }).catch(() => {});
+            }
+          }
+          if (data.album) {
+            for (let album of data.album) {
+              await fetchApi('star', { albumId: album.id }).catch(() => {});
+            }
+          }
+          if (data.artist) {
+            for (let artist of data.artist) {
+              await fetchApi('star', { artistId: artist.id }).catch(() => {});
+            }
+          }
+          alert("Import successful! Resyncing library...");
+          useLibraryStore.getState().syncLibrary();
+        };
+        reader.readAsText(file);
+      } catch (err) {
+        alert("Failed to import. Make sure the file is a valid Pulsar export JSON.");
+      }
+    }
+    input.click();
   };
 
   return (
@@ -359,6 +525,24 @@ function SettingsModal({ isOpen, onClose }) {
             Clear Offline Caches
           </button>
         </div>
+
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <h3 className="text-sm font-semibold text-white mb-3 text-orange-400">Data & Backup</h3>
+          <div className="space-y-3">
+            <button 
+              onClick={handleExportHearts}
+              className="w-full flex items-center justify-center gap-2 bg-orange-400/10 text-orange-400 border border-orange-400/30 hover:bg-orange-400/20 font-semibold py-2.5 rounded-xl transition-all"
+            >
+              Export Favorites (Hearts)
+            </button>
+            <button 
+              onClick={handleImportHearts}
+              className="w-full flex items-center justify-center gap-2 bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 font-semibold py-2.5 rounded-xl transition-all"
+            >
+              Import Favorites
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -420,6 +604,7 @@ function App() {
       <PlayerBar />
       <MobileNav />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <GlobalContextMenu />
     </div>
   );
 }

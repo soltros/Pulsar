@@ -4,8 +4,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 export const useSettingsStore = create(
   persist(
     (set) => ({
-      lastFmApiKey: '',
-      lastFmApiSecret: '',
+      lastFmApiKey: import.meta.env.VITE_LASTFM_API_KEY || '',
+      lastFmApiSecret: import.meta.env.VITE_LASTFM_API_SECRET || '',
       pinnedPlaylists: [],
       
       togglePinPlaylist: (playlist) => set((state) => {

@@ -51,6 +51,16 @@ export const useLibraryStore = create((set, get) => ({
         artistsRes.value.artists.index.forEach(idx => {
           if (idx.artist) allArtists.push(...idx.artist);
         });
+        
+        const existingArtistsArray = await db.artists.toArray();
+        const existingArtists = new Map(existingArtistsArray.map(a => [a.id, a]));
+        allArtists.forEach(artist => {
+          const existing = existingArtists.get(artist.id);
+          if (existing?.lastFmArtUrl) {
+            artist.lastFmArtUrl = existing.lastFmArtUrl;
+          }
+        });
+
         if (allArtists.length > 0) {
           await db.artists.bulkPut(allArtists);
         }
@@ -62,8 +72,15 @@ export const useLibraryStore = create((set, get) => ({
       const radios = radiosRes.status === 'fulfilled' ? radiosRes.value?.internetRadioStations?.internetRadioStation || [] : [];
       
       // Merge unique albums for IndexedDB local caching
+      const existingAlbumsArray = await db.albums.toArray();
+      const existingAlbums = new Map(existingAlbumsArray.map(a => [a.id, a]));
+
       const albumMap = new Map();
       [...favorites, ...topRated, ...recentlyAdded, ...recentlyPlayed, ...mostPlayed, ...random].forEach(album => {
+        const existing = existingAlbums.get(album.id);
+        if (existing?.lastFmArtUrl) {
+          album.lastFmArtUrl = existing.lastFmArtUrl;
+        }
         albumMap.set(album.id, album);
       });
       
@@ -132,6 +149,40 @@ export const useLibraryStore = create((set, get) => ({
       }
     } catch (error) {
       console.error('Last.fm Scan failed:', error);
+    }
+  },
+
+  scanLastFmArtists: async () => {
+    const { lastFmApiKey } = useSettingsStore.getState();
+    if (!lastFmApiKey) {
+      console.warn('Cannot scan Last.fm without API key');
+      return;
+    }
+
+    try {
+      const artists = await db.artists.toArray();
+      for (const artist of artists) {
+        if (artist.lastFmArtUrl) continue;
+        if (!artist.name) continue;
+
+        try {
+          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(artist.name)}&format=json`);
+          if (!res.ok) continue;
+          
+          const data = await res.json();
+          if (data.artist && data.artist.image) {
+            const imageArray = data.artist.image;
+            const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+            if (xlImage && xlImage['#text']) {
+              await db.artists.update(artist.id, { lastFmArtUrl: xlImage['#text'] });
+            }
+          }
+        } catch (e) {
+          console.debug(`Last.fm scan failed for artist ${artist.name}:`, e);
+        }
+      }
+    } catch (error) {
+      console.error('Last.fm artist scan failed:', error);
     }
   }
 }));

@@ -140,10 +140,11 @@ export const useLibraryStore = create((set, get) => ({
 
   toggleStar: async (id, isStarred, type = 'song') => {
     try {
+      const paramName = type === 'song' ? 'id' : type + 'Id';
       if (isStarred) {
-        await fetchApi('unstar', { [type + 'Id']: id });
+        await fetchApi('unstar', { [paramName]: id });
       } else {
-        await fetchApi('star', { [type + 'Id']: id });
+        await fetchApi('star', { [paramName]: id });
       }
       
       // Update IndexedDB optimistic

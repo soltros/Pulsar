@@ -14,7 +14,7 @@ function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center shadow-[0_0_20px_rgba(170,59,255,0.4)]">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)]">
           <PulsarLogo className="text-white w-5 h-5" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-white">Pulsar</h1>

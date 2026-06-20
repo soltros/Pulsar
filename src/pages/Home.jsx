@@ -85,7 +85,7 @@ function SongCard({ song }) {
 
 function RadioCard({ radio }) {
   return (
-    <div className="group cursor-pointer w-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 p-4 rounded-xl transition-colors border border-white/5">
+    <div className="group cursor-pointer w-full bg-gradient-to-br from-rose-500/20 to-orange-500/20 hover:from-rose-500/30 hover:to-orange-500/30 p-4 rounded-xl transition-colors border border-white/5">
       <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center mb-3">
         <Mic2 className="text-white w-5 h-5" />
       </div>

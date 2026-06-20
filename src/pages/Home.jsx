@@ -6,8 +6,9 @@ import { db } from '../lib/db';
 import { getCoverArtUrl } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import PulsarLogo from '../components/PulsarLogo';
+import { useSettingsStore } from '../store/settingsStore';
 
 function LazyImage({ src, alt, className }) {
   const [hasError, setHasError] = useState(false);
@@ -27,8 +28,8 @@ function LazyImage({ src, alt, className }) {
         />
       )}
       {(hasError || !inView) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 z-0">
-          <PulsarLogo className="w-1/3 h-1/3 text-primary/50" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-80 z-0">
+          <PulsarLogo className="w-1/3 h-1/3 text-primary" />
         </div>
       )}
     </div>
@@ -54,12 +55,42 @@ function ConnectedAlbumCard({ album }) {
 }
 
 function ArtistCard({ artist }) {
+  const [imgUrl, setImgUrl] = useState(null);
+  const [hasError, setHasError] = useState(false);
+  const lastFmApiKey = useSettingsStore(state => state.lastFmApiKey);
+
+  useEffect(() => {
+    if (!lastFmApiKey || !artist?.name) return;
+    let isMounted = true;
+    
+    fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(artist.name)}&format=json`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!isMounted || !data?.artist?.image) return;
+        const imageArray = data.artist.image;
+        const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+        if (xlImage && xlImage['#text']) {
+          setImgUrl(xlImage['#text']);
+        }
+      })
+      .catch(() => {});
+
+    return () => { isMounted = false; };
+  }, [artist.name, lastFmApiKey]);
+
   return (
     <div className="group cursor-pointer w-full flex flex-col items-center">
-      <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500">
-        <div className="w-full h-full bg-white/10 flex items-center justify-center text-4xl font-bold text-white/20 uppercase">
-          {artist.name.charAt(0)}
-        </div>
+      <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/5 flex items-center justify-center">
+        {imgUrl && !hasError ? (
+          <img 
+            src={imgUrl} 
+            alt={artist.name} 
+            className="w-full h-full object-cover transition-opacity duration-700" 
+            onError={() => setHasError(true)}
+          />
+        ) : (
+          <PulsarLogo className="w-1/2 h-1/2 text-primary opacity-80" />
+        )}
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
       </div>
       <h3 className="text-white font-semibold text-sm truncate w-full text-center" title={artist.name}>{artist.name}</h3>
@@ -119,7 +150,7 @@ function HorizontalRow({ title, items, renderItem, isSyncing }) {
       </div>
       <div className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-6 px-6">
         {items.map((item) => (
-          <div key={item.id} className="min-w-[140px] md:min-w-[160px] lg:min-w-[180px] snap-start shrink-0">
+          <div key={item.id} className="w-[140px] md:w-[160px] lg:w-[180px] shrink-0 snap-start flex-none">
             {renderItem(item)}
           </div>
         ))}

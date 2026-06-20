@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, Disc3 } from 'lucide-react';
 import { useAuthStore } from './store/authStore';
+import { useLibraryStore } from './store/libraryStore';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from './lib/db';
+import { getCoverArtUrl } from './lib/api';
 import Login from './components/Login';
 
 function Sidebar() {
@@ -84,6 +88,9 @@ function AlbumCard({ title, artist, imgUrl }) {
 }
 
 function MainContent() {
+  const albums = useLiveQuery(() => db.albums.toArray());
+  const isSyncing = useLibraryStore((state) => state.isSyncing);
+
   return (
     <main className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
       {/* Background ambient glow */}
@@ -118,15 +125,28 @@ function MainContent() {
 
         <section>
           <div className="flex items-end justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Recently Played</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-white">Recently Added</h2>
+              {isSyncing && <span className="text-xs font-medium text-primary animate-pulse bg-primary/20 px-2 py-0.5 rounded-full">Syncing...</span>}
+            </div>
             <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
           </div>
+          
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            <AlbumCard title="Midnight City" artist="M83" imgUrl="https://images.unsplash.com/photo-1619983081563-430f63602796?auto=format&fit=crop&q=80&w=300&h=300" />
-            <AlbumCard title="Currents" artist="Tame Impala" imgUrl="https://images.unsplash.com/photo-1614613535808-30b12bc90065?auto=format&fit=crop&q=80&w=300&h=300" />
-            <AlbumCard title="Random Access" artist="Daft Punk" imgUrl="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=300&h=300" />
-            <AlbumCard title="After Hours" artist="The Weeknd" imgUrl="https://images.unsplash.com/photo-1493225457124-a1a2a5956093?auto=format&fit=crop&q=80&w=300&h=300" />
-            <AlbumCard title="Plastic Beach" artist="Gorillaz" imgUrl="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=300&h=300" />
+            {albums?.length > 0 ? (
+              albums.map(album => (
+                <AlbumCard 
+                  key={album.id} 
+                  title={album.name} 
+                  artist={album.artist} 
+                  imgUrl={getCoverArtUrl(album.coverArt)} 
+                />
+              ))
+            ) : (
+              <p className="text-white/40 text-sm col-span-full">
+                {isSyncing ? "Importing library..." : "No albums found in your library."}
+              </p>
+            )}
           </div>
         </section>
       </div>
@@ -200,6 +220,13 @@ function NavItemMobile({ icon, label, active }) {
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const syncLibrary = useLibraryStore((state) => state.syncLibrary);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncLibrary();
+    }
+  }, [isAuthenticated, syncLibrary]);
 
   if (!isAuthenticated) {
     return <Login />;

@@ -3,12 +3,10 @@ import { useAuthStore } from '../store/authStore';
 import { Disc3, LogIn, Server, User, KeyRound } from 'lucide-react';
 
 export default function Login() {
-  const { login, isLoading, error, clearError } = useAuthStore((state) => ({
-    login: state.login,
-    isLoading: state.isLoading,
-    error: state.error,
-    clearError: state.clearError
-  }));
+  const login = useAuthStore((state) => state.login);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
   
   const [serverUrl, setServerUrl] = useState('');
   const [username, setUsername] = useState('');

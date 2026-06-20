@@ -214,19 +214,23 @@ function PlayerBar() {
 function MobileNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[60px] bg-black/80 backdrop-blur-2xl border-t border-white/10 flex items-center justify-around z-50">
-      <NavItemMobile icon={<HomeIcon />} label="Home" active />
-      <NavItemMobile icon={<Search />} label="Search" />
-      <NavItemMobile icon={<Library />} label="Library" />
+      <NavItemMobile to="/" icon={<HomeIcon />} label="Home" end />
+      <NavItemMobile to="/explore" icon={<Search />} label="Search" />
+      <NavItemMobile to="/library" icon={<Library />} label="Library" />
     </nav>
   );
 }
 
-function NavItemMobile({ icon, label, active }) {
+function NavItemMobile({ icon, label, to, end }) {
   return (
-    <a href="/" className={`flex flex-col items-center gap-1 p-2 ${active ? 'text-primary' : 'text-white/50'}`}>
+    <NavLink 
+      to={to || "/"} 
+      end={end}
+      className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-white/50 hover:text-white'}`}
+    >
       <span className="[&>svg]:w-5 [&>svg]:h-5">{icon}</span>
       <span className="text-[10px] font-medium">{label}</span>
-    </a>
+    </NavLink>
   );
 }
 

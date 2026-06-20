@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #aa3bff;
+  --color-bg: #16171d;
+  --color-border: #2e303a;
+  --color-text: #9ca3af;
+  --color-text-h: #f3f4f6;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-text antialiased;
+    font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  }
+}

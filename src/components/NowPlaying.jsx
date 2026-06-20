@@ -1,11 +1,14 @@
-import { ChevronDown, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { getCoverArtUrl } from '../lib/api';
 import PulsarLogo from './PulsarLogo';
+import LyricsView from './LyricsView';
 
 export default function NowPlaying() {
   const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
+  const [showLyrics, setShowLyrics] = useState(false);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -44,14 +47,22 @@ export default function NowPlaying() {
             <ChevronDown className="w-6 h-6" />
           </button>
           <span className="text-xs font-semibold tracking-[0.2em] text-white/50 uppercase">Now Playing</span>
-          <div className="w-12" /> {/* spacer for center alignment */}
+          <button 
+            onClick={() => setShowLyrics(!showLyrics)}
+            className={`p-3 rounded-full transition-colors backdrop-blur-md ${showLyrics ? 'bg-primary text-white shadow-[0_0_15px_rgba(244,63,94,0.5)]' : 'bg-white/5 hover:bg-white/10 text-white/50 hover:text-white'}`}
+            title="Toggle Lyrics"
+          >
+            <Mic2 className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Art and Controls Container */}
         <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-24 mt-8 md:mt-0">
-          {/* Cover Art */}
-          <div className="w-full max-w-[320px] md:max-w-[460px] aspect-square rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] shrink-0 bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10 flex items-center justify-center">
-            {coverUrl ? (
+          {/* Left Column: Cover Art or Lyrics */}
+          <div className={`w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 flex items-center justify-center transition-all duration-500 ${showLyrics ? '' : 'rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10'}`}>
+            {showLyrics ? (
+              <LyricsView track={currentTrack} progress={progress} />
+            ) : coverUrl ? (
               <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
             ) : (
               <PulsarLogo className="w-32 h-32 text-primary opacity-50" />

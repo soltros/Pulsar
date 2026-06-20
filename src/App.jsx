@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, Disc3 } from 'lucide-react';
+import { Home, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, Disc3, X, RefreshCw } from 'lucide-react';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
+import { useSettingsStore } from './store/settingsStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './lib/db';
 import { getCoverArtUrl } from './lib/api';
@@ -47,7 +48,7 @@ function NavItem({ icon, label, active }) {
   );
 }
 
-function TopBar() {
+function TopBar({ onOpenSettings }) {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-transparent">
       <div className="flex-1 max-w-xl">
@@ -61,6 +62,9 @@ function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-4 ml-4">
+        <button onClick={onOpenSettings} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+          <Settings className="w-5 h-5 text-white" />
+        </button>
         <button className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary p-0.5">
           <div className="w-full h-full bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
             <span className="text-sm font-bold text-white">D</span>
@@ -87,8 +91,9 @@ function AlbumCard({ title, artist, imgUrl }) {
   );
 }
 
-function MainContent() {
+function MainContent({ onOpenSettings }) {
   const albums = useLiveQuery(() => db.albums.toArray());
+  const playlists = useLiveQuery(() => db.playlists.toArray());
   const isSyncing = useLibraryStore((state) => state.isSyncing);
 
   return (
@@ -97,29 +102,30 @@ function MainContent() {
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] -z-10 pointer-events-none" />
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] -z-10 pointer-events-none" />
 
-      <TopBar />
+      <TopBar onOpenSettings={onOpenSettings} />
       
       <div className="px-6 pb-24">
         <section className="mb-10 mt-4">
-          <h2 className="text-2xl font-bold text-white mb-6">Good Evening</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">Your Playlists</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Quick Play Cards */}
-            {[
-              { title: "Liked Songs", img: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=100&h=100" },
-              { title: "Daily Mix 1", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=100&h=100" },
-              { title: "Discover Weekly", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=100&h=100" },
-              { title: "Synthwave", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=100&h=100" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center bg-white/5 hover:bg-white/10 rounded-md overflow-hidden cursor-pointer transition-colors group">
-                <img src={item.img} alt="" className="w-16 h-16 object-cover shadow-md" />
-                <span className="font-semibold text-white px-4 flex-1">{item.title}</span>
+            {playlists?.length > 0 ? playlists.map((playlist) => (
+              <div key={playlist.id} className="flex items-center bg-white/5 hover:bg-white/10 rounded-md overflow-hidden cursor-pointer transition-colors group">
+                <div className="w-16 h-16 bg-white/10 flex items-center justify-center shadow-md">
+                   <ListMusic className="text-white/50 w-6 h-6" />
+                </div>
+                <div className="px-4 flex-1 overflow-hidden">
+                  <span className="font-semibold text-white block truncate">{playlist.name}</span>
+                  <span className="text-xs text-white/50 block truncate">{playlist.songCount} Tracks</span>
+                </div>
                 <div className="pr-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white shadow-md shadow-primary/40 hover:scale-105 transition-transform">
                     <Play fill="currentColor" className="w-4 h-4 ml-0.5" />
                   </button>
                 </div>
               </div>
-            ))}
+            )) : (
+               <p className="text-white/40 text-sm">No playlists found.</p>
+            )}
           </div>
         </section>
 
@@ -139,7 +145,7 @@ function MainContent() {
                   key={album.id} 
                   title={album.name} 
                   artist={album.artist} 
-                  imgUrl={getCoverArtUrl(album.coverArt)} 
+                  imgUrl={album.lastFmArtUrl || getCoverArtUrl(album.coverArt)} 
                 />
               ))
             ) : (
@@ -218,9 +224,72 @@ function NavItemMobile({ icon, label, active }) {
   );
 }
 
+function SettingsModal({ isOpen, onClose }) {
+  const { lastFmApiKey, setLastFmCredentials } = useSettingsStore();
+  const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
+  const [apiKey, setApiKey] = useState(lastFmApiKey);
+  const [isScanning, setIsScanning] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    setLastFmCredentials(apiKey, '');
+    onClose();
+  };
+
+  const handleScan = async () => {
+    if (!lastFmApiKey) return;
+    setIsScanning(true);
+    await scanLastFmArt();
+    setIsScanning(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#16171d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white">
+          <X className="w-5 h-5" />
+        </button>
+        <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-white/70 uppercase tracking-wider pl-1 mb-2 block">Last.fm API Key</label>
+            <input
+              type="text"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="Enter your Last.fm API Key"
+              className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-all"
+            />
+            <p className="text-xs text-white/40 mt-2 pl-1">Required to download high-res album art.</p>
+          </div>
+          
+          <button onClick={handleSave} className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-xl transition-colors">
+            Save Settings
+          </button>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-white/10">
+          <h3 className="text-sm font-semibold text-white mb-3">Library Management</h3>
+          <button 
+            onClick={handleScan}
+            disabled={!lastFmApiKey || isScanning}
+            className="w-full flex items-center justify-center gap-2 bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
+            {isScanning ? 'Scanning Last.fm...' : 'Scan & Download Last.fm Art'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const syncLibrary = useLibraryStore((state) => state.syncLibrary);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -233,11 +302,12 @@ function App() {
   }
 
   return (
-    <div className="h-screen w-full flex bg-[#0d0e12] overflow-hidden selection:bg-primary/30">
+    <div className="h-screen w-full flex bg-[#0d0e12] overflow-hidden selection:bg-primary/30 relative">
       <Sidebar />
-      <MainContent />
+      <MainContent onOpenSettings={() => setIsSettingsOpen(true)} />
       <PlayerBar />
       <MobileNav />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

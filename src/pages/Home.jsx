@@ -116,7 +116,7 @@ function RadioCard({ radio }) {
   );
 }
 
-function HorizontalRow({ title, items, renderItem, isSyncing }) {
+export function HorizontalRow({ title, items, renderItem, isSyncing }) {
   if (!items || items.length === 0) return null;
 
   return (
@@ -139,7 +139,7 @@ function HorizontalRow({ title, items, renderItem, isSyncing }) {
   );
 }
 
-function SongGridRow({ title, songs }) {
+export function SongGridRow({ title, songs }) {
   if (!songs || songs.length === 0) return null;
   return (
     <section className="mb-10">

@@ -11,23 +11,47 @@ import PulsarLogo from '../components/PulsarLogo';
 import { useSettingsStore } from '../store/settingsStore';
 
 export function LazyImage({ src, alt, className }) {
+  const [imgSrc, setImgSrc] = useState(null);
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  
   const { ref, inView } = useInView({
     triggerOnce: true,
     rootMargin: '100px 0px', // Fetch slightly before it enters the viewport
   });
 
+  useEffect(() => {
+    if (inView && src && !imgSrc) {
+      setImgSrc(src);
+    }
+  }, [inView, src, imgSrc]);
+
+  const handleError = () => {
+    if (retryCount < 4) {
+      // Exponential backoff to handle 429 Too Many Requests
+      const delay = 1000 * Math.pow(2, retryCount) + Math.random() * 1000;
+      setTimeout(() => {
+        setRetryCount(c => c + 1);
+        // Append retry param to bust cache/retry
+        const sep = src.includes('?') ? '&' : '?';
+        setImgSrc(`${src}${sep}retry=${retryCount + 1}`);
+      }, delay);
+    } else {
+      setHasError(true);
+    }
+  };
+
   return (
     <div ref={ref} className={`bg-gradient-to-br from-rose-500/20 to-orange-500/20 flex items-center justify-center relative border border-white/5 ${className}`}>
-      {inView && !hasError && (
+      {imgSrc && !hasError && (
         <img 
-          src={src} 
+          src={imgSrc} 
           alt={alt} 
           className={`w-full h-full object-cover transition-opacity duration-700 text-transparent absolute inset-0 z-10`} 
-          onError={() => setHasError(true)}
+          onError={handleError}
         />
       )}
-      {(hasError || !inView) && (
+      {(hasError || !imgSrc) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center opacity-80 z-0">
           <PulsarLogo className="w-1/3 h-1/3 text-primary" />
         </div>

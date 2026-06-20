@@ -207,8 +207,17 @@ function SettingsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setLastFmCredentials(apiKey, '');
+    try {
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ VITE_LASTFM_API_KEY: apiKey })
+      });
+    } catch (e) {
+      console.error('Failed to save globally to .env', e);
+    }
     onClose();
   };
 

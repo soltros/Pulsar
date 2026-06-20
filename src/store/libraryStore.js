@@ -45,6 +45,7 @@ export const useLibraryStore = create((set, get) => ({
       const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
       const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
       
+      let artists = [];
       let allArtists = [];
       if (artistsRes.status === 'fulfilled' && artistsRes.value?.artists?.index) {
         artistsRes.value.artists.index.forEach(idx => {

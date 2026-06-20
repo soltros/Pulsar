@@ -4,6 +4,20 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { getCoverArtUrl } from '../lib/api';
 import { Link } from 'react-router-dom';
+import { useInView } from 'react-intersection-observer';
+
+function LazyImage({ src, alt, className }) {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    rootMargin: '100px 0px', // Fetch slightly before it enters the viewport
+  });
+
+  return (
+    <div ref={ref} className={`bg-white/5 ${className}`}>
+      {inView && <img src={src} alt={alt} className={`w-full h-full object-cover transition-opacity duration-500`} />}
+    </div>
+  );
+}
 
 function ConnectedAlbumCard({ album }) {
   const dbAlbum = useLiveQuery(() => db.albums.get(album.id), [album.id]) || album;
@@ -11,7 +25,7 @@ function ConnectedAlbumCard({ album }) {
   return (
     <Link to={`/album/${dbAlbum.id}`} className="group cursor-pointer w-full block">
       <div className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500">
-        <img loading="lazy" src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out bg-white/5" />
+        <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
         <button className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110">
           <Play fill="currentColor" className="w-5 h-5 ml-1" />
@@ -41,7 +55,7 @@ function SongCard({ song }) {
   return (
     <div className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors">
       <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
-        <img loading="lazy" src={getCoverArtUrl(song.coverArt)} className="w-full h-full object-cover" alt="" />
+        <LazyImage src={getCoverArtUrl(song.coverArt)} className="w-full h-full" alt="" />
         <button className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <Play fill="currentColor" className="w-4 h-4 text-white ml-0.5" />
         </button>

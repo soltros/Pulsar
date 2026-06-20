@@ -17,6 +17,7 @@
     "md5": "^2.3.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-intersection-observer": "^10.0.3",
     "react-router-dom": "^7.18.0",
     "tailwindcss": "^4.3.1",
     "zustand": "^5.0.14"

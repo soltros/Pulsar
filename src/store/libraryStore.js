@@ -6,23 +6,33 @@ import { useSettingsStore } from './settingsStore';
 export const useLibraryStore = create((set, get) => ({
   isSyncing: false,
   lastSync: 0,
+  homeLists: {
+    recentlyAdded: [],
+    recentlyPlayed: [],
+    mostPlayed: [],
+    random: []
+  },
   
   syncLibrary: async () => {
     if (get().isSyncing) return;
     set({ isSyncing: true });
     
     try {
-      // 1. Fetch Recently Added / Newest Albums (Limit 50 for quick initial load)
-      const albumsRes = await fetchApi('getAlbumList2', { type: 'newest', size: 50 });
-      let newestAlbums = albumsRes.albumList2?.album || [];
+      const [newestRes, recentRes, frequentRes, randomRes] = await Promise.allSettled([
+        fetchApi('getAlbumList2', { type: 'newest', size: 15 }),
+        fetchApi('getAlbumList2', { type: 'recent', size: 15 }),
+        fetchApi('getAlbumList2', { type: 'frequent', size: 15 }),
+        fetchApi('getAlbumList2', { type: 'random', size: 15 })
+      ]);
+
+      const recentlyAdded = newestRes.status === 'fulfilled' ? newestRes.value?.albumList2?.album || [] : [];
+      const recentlyPlayed = recentRes.status === 'fulfilled' ? recentRes.value?.albumList2?.album || [] : [];
+      const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
+      const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
       
-      // Also fetch Frequent/Recently Played if available
-      const frequentRes = await fetchApi('getAlbumList2', { type: 'recent', size: 50 }).catch(() => null);
-      let recentAlbums = frequentRes?.albumList2?.album || [];
-      
-      // Merge unique albums
+      // Merge unique albums for IndexedDB local caching
       const albumMap = new Map();
-      [...newestAlbums, ...recentAlbums].forEach(album => {
+      [...recentlyAdded, ...recentlyPlayed, ...mostPlayed, ...random].forEach(album => {
         albumMap.set(album.id, album);
       });
       
@@ -40,7 +50,11 @@ export const useLibraryStore = create((set, get) => ({
         await db.playlists.bulkPut(playlists);
       }
       
-      set({ isSyncing: false, lastSync: Date.now() });
+      set({ 
+        isSyncing: false, 
+        lastSync: Date.now(),
+        homeLists: { recentlyAdded, recentlyPlayed, mostPlayed, random }
+      });
     } catch (error) {
       console.error('Library Sync failed:', error);
       set({ isSyncing: false });

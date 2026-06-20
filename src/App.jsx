@@ -75,25 +75,51 @@ function TopBar({ onOpenSettings }) {
   );
 }
 
-function AlbumCard({ title, artist, imgUrl }) {
+function ConnectedAlbumCard({ album }) {
+  // Use Dexie live query to always get the freshest album data (like after Last.fm sync)
+  const dbAlbum = useLiveQuery(() => db.albums.get(album.id), [album.id]) || album;
+  
   return (
-    <div className="group cursor-pointer">
+    <div className="group cursor-pointer w-full">
       <div className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500">
-        <img src={imgUrl} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+        <img src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out bg-white/5" />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
         <button className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110">
           <Play fill="currentColor" className="w-5 h-5 ml-1" />
         </button>
       </div>
-      <h3 className="text-white font-semibold text-sm truncate">{title}</h3>
-      <p className="text-white/60 text-xs truncate mt-0.5">{artist}</p>
+      <h3 className="text-white font-semibold text-sm truncate" title={dbAlbum.name}>{dbAlbum.name}</h3>
+      <p className="text-white/60 text-xs truncate mt-0.5" title={dbAlbum.artist}>{dbAlbum.artist}</p>
     </div>
   );
 }
 
+function AlbumRow({ title, albums, isSyncing }) {
+  if (!albums || albums.length === 0) return null;
+
+  return (
+    <section className="mb-10">
+      <div className="flex items-end justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-white">{title}</h2>
+          {isSyncing && <span className="text-xs font-medium text-primary animate-pulse bg-primary/20 px-2 py-0.5 rounded-full">Syncing...</span>}
+        </div>
+        <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
+      </div>
+      <div className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-6 px-6">
+        {albums.map((album) => (
+          <div key={album.id} className="min-w-[140px] md:min-w-[160px] lg:min-w-[180px] snap-start shrink-0">
+            <ConnectedAlbumCard album={album} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MainContent({ onOpenSettings }) {
-  const albums = useLiveQuery(() => db.albums.toArray());
   const playlists = useLiveQuery(() => db.playlists.toArray());
+  const homeLists = useLibraryStore((state) => state.homeLists);
   const isSyncing = useLibraryStore((state) => state.isSyncing);
 
   return (
@@ -129,32 +155,15 @@ function MainContent({ onOpenSettings }) {
           </div>
         </section>
 
-        <section>
-          <div className="flex items-end justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white">Recently Added</h2>
-              {isSyncing && <span className="text-xs font-medium text-primary animate-pulse bg-primary/20 px-2 py-0.5 rounded-full">Syncing...</span>}
-            </div>
-            <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {albums?.length > 0 ? (
-              albums.map(album => (
-                <AlbumCard 
-                  key={album.id} 
-                  title={album.name} 
-                  artist={album.artist} 
-                  imgUrl={album.lastFmArtUrl || getCoverArtUrl(album.coverArt)} 
-                />
-              ))
-            ) : (
-              <p className="text-white/40 text-sm col-span-full">
-                {isSyncing ? "Importing library..." : "No albums found in your library."}
-              </p>
-            )}
-          </div>
-        </section>
+        {/* Album Rows */}
+        <AlbumRow title="Recently Added" albums={homeLists.recentlyAdded} isSyncing={isSyncing} />
+        <AlbumRow title="Recently Played" albums={homeLists.recentlyPlayed} />
+        <AlbumRow title="Most Played" albums={homeLists.mostPlayed} />
+        <AlbumRow title="Random Albums" albums={homeLists.random} />
+        
+        {(!homeLists.recentlyAdded || homeLists.recentlyAdded.length === 0) && !isSyncing && (
+          <p className="text-white/40 text-sm">No albums found in your library. Is your Navidrome scanning?</p>
+        )}
       </div>
     </main>
   );

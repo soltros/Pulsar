@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu } from 'lucide-react';
+import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu, Trash2 } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
@@ -277,6 +277,21 @@ function SettingsModal({ isOpen, onClose }) {
     setIsScanningTracks(false);
   };
 
+  const handleClearCache = async () => {
+    try {
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map(key => caches.delete(key)));
+        alert('Offline audio and image caches successfully cleared!');
+      } else {
+        alert('Offline caching is not supported in this browser.');
+      }
+    } catch (e) {
+      console.error('Failed to clear cache:', e);
+      alert('Failed to clear caches.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-[#16171d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
@@ -331,6 +346,18 @@ function SettingsModal({ isOpen, onClose }) {
               {isScanningTracks ? 'Scanning Tracks...' : 'Fetch Track Bios'}
             </button>
           </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <h3 className="text-sm font-semibold text-white mb-3 text-rose-500">Storage & Offline Mode</h3>
+          <p className="text-xs text-white/40 mb-3 leading-relaxed">Songs and artwork are automatically cached as you play them so they work offline. If you run low on space, you can clear them here.</p>
+          <button 
+            onClick={handleClearCache}
+            className="w-full flex items-center justify-center gap-2 bg-rose-500/10 text-rose-500 border border-rose-500/30 hover:bg-rose-500/20 font-semibold py-2.5 rounded-xl transition-all"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear Offline Caches
+          </button>
         </div>
       </div>
     </div>

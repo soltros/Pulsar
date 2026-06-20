@@ -4,6 +4,9 @@ import './index.css'
 import App from './App.jsx'
 
 import { BrowserRouter } from 'react-router-dom'
+import { registerSW } from 'virtual:pwa-register'
+
+registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

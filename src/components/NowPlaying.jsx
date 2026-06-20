@@ -80,9 +80,9 @@ export default function NowPlaying() {
         </div>
 
         {/* Art, Queue, Lyrics, and Controls Container */}
-        <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-24 mt-8 md:mt-0">
+        <div className={`flex-1 flex flex-col ${nowPlayingTab === 'art' ? 'lg:flex-row' : ''} items-center justify-center gap-8 lg:gap-16 mt-8 md:mt-0 w-full max-w-full`}>
           {/* Left Column: Cover Art, Lyrics, or Queue */}
-          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[60vh] md:h-[500px] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
+          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-full h-[55vh] md:h-[65vh] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
             {nowPlayingTab === 'lyrics' && (
               <div className="w-full h-full overflow-hidden relative mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
                 <LyricsView track={currentTrack} progress={progress} />
@@ -158,8 +158,8 @@ export default function NowPlaying() {
           </div>
 
           {/* Info & Controls */}
-          <div className="flex flex-col w-full max-w-md md:max-w-xl">
-            <div className="mb-8 text-center md:text-left flex flex-col items-center md:items-start">
+          <div className={`flex flex-col w-full ${nowPlayingTab === 'art' ? 'max-w-md md:max-w-xl' : 'max-w-3xl'}`}>
+            <div className={`mb-8 text-center flex flex-col items-center ${nowPlayingTab === 'art' ? 'lg:text-left lg:items-start' : ''}`}>
               {currentTrack ? (
                 <>
                   <div className="flex items-center gap-4 mb-4">
@@ -222,7 +222,7 @@ export default function NowPlaying() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center justify-center md:justify-start gap-8">
+            <div className={`flex items-center justify-center ${nowPlayingTab === 'art' ? 'lg:justify-start' : ''} gap-8`}>
               <button onClick={playPrev} className="text-white/50 hover:text-white transition-colors hover:scale-110">
                 <SkipBack className="w-8 h-8 md:w-10 md:h-10 fill-current" />
               </button>

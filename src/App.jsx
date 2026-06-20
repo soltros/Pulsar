@@ -129,6 +129,7 @@ function PlayerBar() {
   const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen, setNowPlayingTab } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
   const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
+  const dbSong = useLiveQuery(() => currentTrack ? db.songs.get(currentTrack.id) : null, [currentTrack?.id]);
   const [hasError, setHasError] = useState(false);
 
   // Reset error state when track changes
@@ -170,10 +171,21 @@ function PlayerBar() {
             <PulsarLogo className="w-8 h-8 text-white/20" />
           )}
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden pr-2">
           <h4 className="text-white font-medium text-sm truncate group-hover:text-primary transition-colors">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h4>
           <p className="text-white/50 text-xs truncate">{currentTrack ? currentTrack.artist : ''}</p>
         </div>
+        {currentTrack && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : false, 'song');
+            }}
+            className={`p-2 rounded-full transition-colors ${dbSong?.starred ? 'text-rose-500' : 'text-white/30 hover:text-white'}`}
+          >
+            <Heart className="w-5 h-5" fill={dbSong?.starred ? 'currentColor' : 'none'} />
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col items-center flex-1 max-w-2xl px-4">
@@ -257,6 +269,35 @@ function GlobalContextMenu() {
 
   if (!contextMenu.isOpen) return null;
 
+  const handlePlayQueue = async (e, action) => {
+    e.stopPropagation();
+    try {
+      let tracks = [];
+      if (contextMenu.type === 'song') {
+        tracks = [contextMenu.target];
+      } else if (contextMenu.type === 'album') {
+        const res = await fetchApi('getAlbum', { id: contextMenu.target.id });
+        if (res.album?.song) tracks = res.album.song;
+      }
+      
+      if (tracks.length > 0) {
+        if (action === 'next') {
+          usePlayerStore.getState().addToQueueNext(tracks);
+          alert('Added to Play Next!');
+        }
+        if (action === 'last') {
+          usePlayerStore.getState().addToQueueLast(tracks);
+          alert('Added to Play Last!');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      closeContextMenu();
+      setShowPlaylists(false);
+    }
+  };
+
   const handleAddToPlaylist = async (e, playlistId) => {
     e.stopPropagation();
     try {
@@ -316,6 +357,18 @@ function GlobalContextMenu() {
 
       {!showPlaylists ? (
         <>
+          <button 
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+            onClick={(e) => handlePlayQueue(e, 'next')}
+          >
+            Play Next
+          </button>
+          <button 
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+            onClick={(e) => handlePlayQueue(e, 'last')}
+          >
+            Play Last
+          </button>
           <button 
             className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors flex justify-between items-center group"
             onClick={(e) => { e.stopPropagation(); setShowPlaylists(true); }}

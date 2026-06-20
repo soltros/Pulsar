@@ -22,6 +22,25 @@ export const usePlayerStore = create((set, get) => ({
 
   setQueue: (queue) => set({ queue }),
 
+  addToQueueNext: (tracks) => {
+    const { queue, currentIndex } = get();
+    const newQueue = [...queue];
+    const insertIdx = currentIndex >= 0 ? currentIndex + 1 : 0;
+    newQueue.splice(insertIdx, 0, ...tracks);
+    set({ queue: newQueue });
+    if (currentIndex === -1) {
+      set({ currentIndex: 0, isPlaying: true });
+    }
+  },
+
+  addToQueueLast: (tracks) => {
+    const { queue, currentIndex } = get();
+    set({ queue: [...queue, ...tracks] });
+    if (currentIndex === -1) {
+      set({ currentIndex: 0, isPlaying: true });
+    }
+  },
+
   playNext: () => {
     const { queue, currentIndex } = get();
     if (currentIndex < queue.length - 1) {

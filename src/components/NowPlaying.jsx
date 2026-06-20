@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2, ListMusic, Clock, Image as ImageIcon } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2, ListMusic, Clock, Image as ImageIcon, Heart, Save } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
-import { getCoverArtUrl } from '../lib/api';
+import { getCoverArtUrl, fetchApi } from '../lib/api';
+import { useLibraryStore } from '../store/libraryStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import PulsarLogo from './PulsarLogo';
@@ -28,6 +29,7 @@ export default function NowPlaying() {
   };
 
   const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
+  const dbSong = useLiveQuery(() => currentTrack ? db.songs.get(currentTrack.id) : null, [currentTrack?.id]);
   const [hasError, setHasError] = useState(false);
 
   const coverUrl = currentTrack?.lastFmArtUrl || dbAlbum?.lastFmArtUrl || (currentTrack ? getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 800) : null);
@@ -89,7 +91,29 @@ export default function NowPlaying() {
             
             {nowPlayingTab === 'queue' && (
               <div className="w-full h-full bg-black/40 rounded-3xl border border-white/10 p-4 overflow-y-auto hide-scrollbar mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)' }}>
-                <h3 className="text-white font-bold mb-4 px-2">Up Next</h3>
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h3 className="text-white font-bold">Up Next</h3>
+                  <button 
+                    onClick={async () => {
+                      const name = prompt('Enter a name for the new playlist:');
+                      if (name) {
+                        try {
+                          const res = await fetchApi('createPlaylist', { name });
+                          if (res.playlist) {
+                            await fetchApi('updatePlaylist', { playlistId: res.playlist.id, songIdToAdd: queue.map(t => t.id) });
+                            alert('Saved queue as playlist!');
+                            useLibraryStore.getState().syncLibrary();
+                          }
+                        } catch (e) {
+                          alert('Failed to save playlist.');
+                        }
+                      }
+                    }}
+                    className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-white bg-primary/10 hover:bg-primary/30 px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    <Save className="w-3 h-3" /> Save as Playlist
+                  </button>
+                </div>
                 <div className="flex flex-col gap-1">
                   {queue.map((track, idx) => {
                     const isTrackPlaying = currentIndex === idx;
@@ -138,15 +162,23 @@ export default function NowPlaying() {
             <div className="mb-8 text-center md:text-left flex flex-col items-center md:items-start">
               {currentTrack ? (
                 <>
-                  <a 
-                    href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight line-clamp-2 hover:underline decoration-white/30"
-                    title="View on Last.fm"
-                  >
-                    {currentTrack.title}
-                  </a>
+                  <div className="flex items-center gap-4 mb-4">
+                    <a 
+                      href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30"
+                      title="View on Last.fm"
+                    >
+                      {currentTrack.title}
+                    </a>
+                    <button 
+                      onClick={() => useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : false, 'song')}
+                      className={`p-2 rounded-full transition-colors shrink-0 ${dbSong?.starred ? 'text-rose-500' : 'text-white/30 hover:text-white'}`}
+                    >
+                      <Heart className="w-8 h-8 md:w-10 md:h-10" fill={dbSong?.starred ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
                   <button 
                     onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }}
                     className="text-xl md:text-2xl font-medium text-white/50 hover:text-white hover:underline transition-colors"

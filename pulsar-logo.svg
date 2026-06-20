@@ -9,16 +9,13 @@
   <rect width="512" height="512" rx="120" fill="#0d0e12" />
   
   <g transform="translate(256, 256) scale(18)">
-    <!-- Outer Diamond -->
-    <polygon points="0,-10 10,-1 0,10 -10,-1" stroke="url(#pulsarGradient)" stroke-width="1.2" stroke-linejoin="round" />
+    <!-- Outer Minimal Diamond -->
+    <polygon points="0,-10 10,0 0,10 -10,0" stroke="url(#pulsarGradient)" stroke-width="1" stroke-linejoin="miter" />
     
-    <!-- Inner 3D Facets -->
-    <polygon points="0,-10 5,-1 0,10 -5,-1" stroke="url(#pulsarGradient)" stroke-width="1.2" stroke-linejoin="round" />
+    <!-- Inner Concentric Diamond -->
+    <polygon points="0,-5 5,0 0,5 -5,0" stroke="url(#pulsarGradient)" stroke-width="1" stroke-linejoin="miter" opacity="0.6" />
     
-    <!-- Vertical Core Line -->
-    <line x1="0" y1="-10" x2="0" y2="10" stroke="url(#pulsarGradient)" stroke-width="1.2" stroke-linecap="round" />
-    
-    <!-- Horizontal Horizon Line -->
-    <line x1="-10" y1="-1" x2="10" y2="-1" stroke="url(#pulsarGradient)" stroke-width="1.2" opacity="0.3" stroke-linecap="round" />
+    <!-- Core Dot -->
+    <circle cx="0" cy="0" r="1.5" fill="url(#pulsarGradient)" />
   </g>
 </svg>

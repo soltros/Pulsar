@@ -13,6 +13,7 @@ import Login from './components/Login';
 import Home from './pages/Home';
 import AlbumView from './pages/AlbumView';
 import ArtistView from './pages/ArtistView';
+import ExploreView from './pages/ExploreView';
 import PlaylistView from './pages/PlaylistView';
 import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
@@ -379,6 +380,7 @@ function App() {
         
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<ExploreView />} />
           <Route path="/library" element={<LibraryView />} />
           <Route path="/album/:id" element={<AlbumView />} />
           <Route path="/artist/:id" element={<ArtistView />} />

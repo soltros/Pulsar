@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw } from 'lucide-react';
+import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
@@ -15,49 +15,63 @@ import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import NowPlaying from './components/NowPlaying';
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose, onOpenSettings }) {
   const pinnedPlaylists = useSettingsStore(state => state.pinnedPlaylists);
   
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)]">
-          <PulsarLogo className="text-white w-5 h-5" />
+    <>
+      {isOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" onClick={onClose} />
+      )}
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#0d0e12]/95 md:bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)]">
+              <PulsarLogo className="text-white w-5 h-5" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-white">Pulsar</h1>
+          </div>
+          <button className="md:hidden text-white/50 hover:text-white" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">Pulsar</h1>
-      </div>
-      
-      <nav className="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
-        <NavItem to="/" icon={<HomeIcon />} label="Home" end />
-        <NavItem to="/explore" icon={<Search />} label="Explore" />
-        <NavItem to="/library" icon={<Library />} label="Library" />
         
-        <div className="pt-6 pb-2">
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-2">Pinned Playlists</p>
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
+          <NavItem to="/" icon={<HomeIcon />} label="Home" end onClick={onClose} />
+          <NavItem to="/explore" icon={<Search />} label="Explore" onClick={onClose} />
+          <NavItem to="/library" icon={<Library />} label="Library" onClick={onClose} />
+          
+          <div className="pt-6 pb-2">
+            <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-2">Pinned Playlists</p>
+          </div>
+          {pinnedPlaylists.map(playlist => (
+            <NavItem key={playlist.id} to={`/playlist/${playlist.id}`} icon={<ListMusic />} label={playlist.name} onClick={onClose} />
+          ))}
+          {pinnedPlaylists.length === 0 && (
+            <p className="text-xs text-white/30 px-2 italic">Pin playlists from the Library.</p>
+          )}
+        </nav>
+        
+        <div className="p-4 mt-auto">
+          <button 
+            onClick={() => { onClose(); onOpenSettings(); }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 text-white/70 hover:text-white hover:bg-white/5 w-full text-left"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-medium text-sm truncate">Settings</span>
+          </button>
         </div>
-        {pinnedPlaylists.map(playlist => (
-          <NavItem key={playlist.id} to={`/playlist/${playlist.id}`} icon={<ListMusic />} label={playlist.name} />
-        ))}
-        {pinnedPlaylists.length === 0 && (
-          <p className="text-xs text-white/30 px-2 italic">Pin playlists from the Library.</p>
-        )}
-      </nav>
-      
-      <div className="p-4 mt-auto">
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 text-white/70 hover:text-white hover:bg-white/5 w-full text-left">
-          <Settings className="w-5 h-5" />
-          <span className="font-medium text-sm truncate">Settings</span>
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
-function NavItem({ icon, label, to, end }) {
+function NavItem({ icon, label, to, end, onClick }) {
   return (
     <NavLink 
       to={to || "/"} 
       end={end}
+      onClick={onClick}
       className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 ${isActive ? 'bg-primary/20 text-white shadow-[0_0_15px_rgba(244,63,94,0.2)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
     >
       {({ isActive }) => (
@@ -72,11 +86,14 @@ function NavItem({ icon, label, to, end }) {
   );
 }
 
-function TopBar({ onOpenSettings }) {
+function TopBar({ onOpenSettings, onOpenSidebar }) {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-[#0d0e12]/80 backdrop-blur-xl border-b border-white/5">
-      <div className="flex-1 max-w-xl">
-        <div className="relative group">
+      <div className="flex items-center flex-1 max-w-xl gap-4">
+        <button onClick={onOpenSidebar} className="md:hidden w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0">
+          <Menu className="w-5 h-5 text-white" />
+        </button>
+        <div className="relative group w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 group-focus-within:text-primary transition-colors" />
           <input 
             type="text" 
@@ -248,6 +265,14 @@ function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const syncLibrary = useLibraryStore((state) => state.syncLibrary);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const location = useLocation();
+
+  useEffect(() => {
+    // Close sidebar on route change
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -261,14 +286,21 @@ function App() {
 
   return (
     <div className="h-screen w-full flex bg-[#0d0e12] overflow-hidden selection:bg-primary/30 relative">
-      <Sidebar />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
       
       <main className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
         {/* Background ambient glow */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] -z-10 pointer-events-none" />
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] -z-10 pointer-events-none" />
 
-        <TopBar onOpenSettings={() => setIsSettingsOpen(true)} />
+        <TopBar 
+          onOpenSettings={() => setIsSettingsOpen(true)} 
+          onOpenSidebar={() => setIsSidebarOpen(true)}
+        />
         
         <Routes>
           <Route path="/" element={<Home />} />

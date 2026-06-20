@@ -11,7 +11,7 @@ import PlaylistView from './pages/PlaylistView';
 
 function Sidebar() {
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full">
+    <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24">
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
           <Disc3 className="text-white w-5 h-5" />
@@ -51,7 +51,7 @@ function NavItem({ icon, label, active }) {
 
 function TopBar({ onOpenSettings }) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-transparent">
+    <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-[#0d0e12]/80 backdrop-blur-xl border-b border-white/5">
       <div className="flex-1 max-w-xl">
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 group-focus-within:text-primary transition-colors" />

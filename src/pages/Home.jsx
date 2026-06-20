@@ -1,20 +1,32 @@
-import { Play, Mic2, ListMusic } from 'lucide-react';
+import { Disc3, Play, Mic2, ListMusic } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { getCoverArtUrl } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
+import { useState } from 'react';
 
 function LazyImage({ src, alt, className }) {
+  const [hasError, setHasError] = useState(false);
   const { ref, inView } = useInView({
     triggerOnce: true,
     rootMargin: '100px 0px', // Fetch slightly before it enters the viewport
   });
 
   return (
-    <div ref={ref} className={`bg-white/5 ${className}`}>
-      {inView && <img src={src} alt={alt} className={`w-full h-full object-cover transition-opacity duration-500`} />}
+    <div ref={ref} className={`bg-white/5 flex items-center justify-center relative ${className}`}>
+      {inView && !hasError && (
+        <img 
+          src={src} 
+          alt={alt} 
+          className={`w-full h-full object-cover transition-opacity duration-500 text-transparent absolute inset-0 z-10`} 
+          onError={() => setHasError(true)}
+        />
+      )}
+      {(hasError || !inView) && (
+        <Disc3 className="w-1/3 h-1/3 text-white/10 absolute z-0" />
+      )}
     </div>
   );
 }

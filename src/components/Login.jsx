@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { Disc3, LogIn, Server, User, KeyRound } from 'lucide-react';
+import { LogIn, Server, User, KeyRound } from 'lucide-react';
+import PulsarLogo from './PulsarLogo';
 
 export default function Login() {
   const login = useAuthStore((state) => state.login);
@@ -28,8 +29,8 @@ export default function Login() {
 
       <div className="w-full max-w-md p-8 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl z-10">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-[0_0_30px_rgba(170,59,255,0.4)] mb-6">
-            <Disc3 className="text-white w-10 h-10" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.4)] mb-6">
+            <PulsarLogo className="text-white w-10 h-10" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Welcome to Pulsar</h1>
           <p className="text-white/50 text-sm text-center">Connect to your Navidrome or OpenSubsonic server</p>
@@ -105,7 +106,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-primary to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-primary to-orange-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

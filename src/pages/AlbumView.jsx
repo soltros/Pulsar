@@ -5,6 +5,7 @@ import { db } from '../lib/db';
 import { fetchApi, getCoverArtUrl } from '../lib/api';
 import { usePlayerStore } from '../store/playerStore';
 import { Play, Clock, Hash, Pause, Calendar, Heart } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import PulsarLogo from '../components/PulsarLogo';
 import { Link } from 'react-router-dom';
 import { useLibraryStore } from '../store/libraryStore';
@@ -181,7 +182,7 @@ export default function AlbumView() {
         <div className="px-8 pt-8">
           <div className="bg-white/5 rounded-2xl p-6 text-white/80 leading-relaxed max-w-4xl text-sm border border-white/5">
             <h3 className="font-semibold text-white mb-2 uppercase tracking-wider text-xs">About this album</h3>
-            <div dangerouslySetInnerHTML={{ __html: album.description.replace(/\n/g, '<br />') }} />
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(album.description.replace(/\n/g, '<br />')) }} />
           </div>
         </div>
       )}

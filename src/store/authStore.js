@@ -28,7 +28,6 @@ export const useAuthStore = create(
       isAuthenticated: false,
       serverUrl: '',
       username: '',
-      password: '',
       salt: '',
       token: '',
       rememberMe: false,
@@ -59,7 +58,6 @@ export const useAuthStore = create(
               isAuthenticated: true, 
               serverUrl: cleanUrl, 
               username, 
-              password, // Store password to regenerate tokens later if needed
               salt,
               token,
               rememberMe,
@@ -84,7 +82,6 @@ export const useAuthStore = create(
           isAuthenticated: false, 
           serverUrl: '', 
           username: '', 
-          password: '',
           salt: '',
           token: '',
           rememberMe: false,

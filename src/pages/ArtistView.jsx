@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
-import { fetchApi } from '../lib/api';
+import { fetchApi, getCoverArtUrl } from '../lib/api';
+import DOMPurify from 'dompurify';
 import PulsarLogo from '../components/PulsarLogo';
 import { ConnectedAlbumCard } from './Home';
 
@@ -90,7 +91,7 @@ export default function ArtistView() {
         <div className="px-8 md:px-12 pt-12">
           <div className="bg-white/5 rounded-3xl p-8 text-white/80 leading-relaxed text-base border border-white/5 shadow-xl max-w-5xl mx-auto">
             <h3 className="font-bold text-white mb-4 uppercase tracking-[0.1em] text-sm text-primary">Biography</h3>
-            <div dangerouslySetInnerHTML={{ __html: artist.bio.replace(/\n/g, '<br />') }} />
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(artist.bio.replace(/\n/g, '<br />')) }} />
           </div>
         </div>
       )}

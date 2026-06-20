@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu, Trash2 } from 'lucide-react';
+import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu, Trash2, Heart } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
@@ -18,6 +18,7 @@ import PlaylistView from './pages/PlaylistView';
 import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import NowPlaying from './components/NowPlaying';
+import HeartsView from './pages/HeartsView';
 
 function Sidebar({ isOpen, onClose, onOpenSettings }) {
   const pinnedPlaylists = useSettingsStore(state => state.pinnedPlaylists);
@@ -45,7 +46,11 @@ function Sidebar({ isOpen, onClose, onOpenSettings }) {
           <NavItem to="/explore" icon={<Search />} label="Explore" onClick={onClose} />
           <NavItem to="/library" icon={<Library />} label="Library" onClick={onClose} />
           
-          <div className="pt-6 pb-2">
+          <div className="pt-4">
+            <NavItem to="/hearts" icon={<Heart />} label="Hearts" onClick={onClose} />
+          </div>
+
+          <div className="pt-4 pb-2">
             <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-2">Pinned Playlists</p>
           </div>
           {pinnedPlaylists.map(playlist => (
@@ -537,13 +542,13 @@ function SettingsModal({ isOpen, onClose }) {
               onClick={handleExportHearts}
               className="w-full flex items-center justify-center gap-2 bg-orange-400/10 text-orange-400 border border-orange-400/30 hover:bg-orange-400/20 font-semibold py-2.5 rounded-xl transition-all"
             >
-              Export Favorites (Hearts)
+              Export Hearts
             </button>
             <button 
               onClick={handleImportHearts}
               className="w-full flex items-center justify-center gap-2 bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 font-semibold py-2.5 rounded-xl transition-all"
             >
-              Import Favorites
+              Import Hearts
             </button>
           </div>
         </div>
@@ -597,6 +602,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<ExploreView />} />
           <Route path="/library" element={<LibraryView />} />
+          <Route path="/hearts" element={<HeartsView />} />
           <Route path="/album/:id" element={<AlbumView />} />
           <Route path="/artist/:id" element={<ArtistView />} />
           <Route path="/playlist/:id" element={<PlaylistView />} />

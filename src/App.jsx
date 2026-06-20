@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, NavLink } from 'react-router-dom';
 import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
@@ -11,9 +11,12 @@ import Login from './components/Login';
 import Home from './pages/Home';
 import AlbumView from './pages/AlbumView';
 import PlaylistView from './pages/PlaylistView';
+import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 
 function Sidebar() {
+  const pinnedPlaylists = useSettingsStore(state => state.pinnedPlaylists);
+  
   return (
     <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24">
       <div className="p-6 flex items-center gap-3">
@@ -23,33 +26,48 @@ function Sidebar() {
         <h1 className="text-xl font-bold tracking-tight text-white">Pulsar</h1>
       </div>
       
-      <nav className="flex-1 px-4 space-y-2">
-        <NavItem icon={<HomeIcon />} label="Home" active />
-        <NavItem icon={<Search />} label="Explore" />
-        <NavItem icon={<Library />} label="Library" />
+      <nav className="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
+        <NavItem to="/" icon={<HomeIcon />} label="Home" end />
+        <NavItem to="/explore" icon={<Search />} label="Explore" />
+        <NavItem to="/library" icon={<Library />} label="Library" />
         
         <div className="pt-6 pb-2">
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-2">Playlists</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-2">Pinned Playlists</p>
         </div>
-        <NavItem icon={<ListMusic />} label="Favorites" />
-        <NavItem icon={<ListMusic />} label="Recently Added" />
+        {pinnedPlaylists.map(playlist => (
+          <NavItem key={playlist.id} to={`/playlist/${playlist.id}`} icon={<ListMusic />} label={playlist.name} />
+        ))}
+        {pinnedPlaylists.length === 0 && (
+          <p className="text-xs text-white/30 px-2 italic">Pin playlists from the Library.</p>
+        )}
       </nav>
       
       <div className="p-4 mt-auto">
-        <NavItem icon={<Settings />} label="Settings" />
+        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 text-white/70 hover:text-white hover:bg-white/5 w-full text-left">
+          <Settings className="w-5 h-5" />
+          <span className="font-medium text-sm truncate">Settings</span>
+        </button>
       </div>
     </aside>
   );
 }
 
-function NavItem({ icon, label, active }) {
+function NavItem({ icon, label, to, end }) {
   return (
-    <a href="/" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 ${active ? 'bg-primary/20 text-white shadow-[0_0_15px_rgba(170,59,255,0.2)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
-      <span className={active ? 'text-primary' : ''}>
-        {icon}
-      </span>
-      <span className="font-medium text-sm">{label}</span>
-    </a>
+    <NavLink 
+      to={to || "/"} 
+      end={end}
+      className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 ${isActive ? 'bg-primary/20 text-white shadow-[0_0_15px_rgba(244,63,94,0.2)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+    >
+      {({ isActive }) => (
+        <>
+          <span className={isActive ? 'text-primary' : ''}>
+            {icon}
+          </span>
+          <span className="font-medium text-sm truncate">{label}</span>
+        </>
+      )}
+    </NavLink>
   );
 }
 
@@ -250,6 +268,7 @@ function App() {
         
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/library" element={<LibraryView />} />
           <Route path="/album/:id" element={<AlbumView />} />
           <Route path="/playlist/:id" element={<PlaylistView />} />
         </Routes>

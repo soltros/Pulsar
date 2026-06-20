@@ -6,6 +6,16 @@ export const useSettingsStore = create(
     (set) => ({
       lastFmApiKey: '',
       lastFmApiSecret: '',
+      pinnedPlaylists: [],
+      
+      togglePinPlaylist: (playlist) => set((state) => {
+        const isPinned = state.pinnedPlaylists.find(p => p.id === playlist.id);
+        if (isPinned) {
+          return { pinnedPlaylists: state.pinnedPlaylists.filter(p => p.id !== playlist.id) };
+        } else {
+          return { pinnedPlaylists: [...state.pinnedPlaylists, { id: playlist.id, name: playlist.name }] };
+        }
+      }),
       
       setLastFmCredentials: (key, secret) => set({ 
         lastFmApiKey: key, 

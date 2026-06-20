@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Home, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, Disc3 } from 'lucide-react';
+import { useAuthStore } from './store/authStore';
+import Login from './components/Login';
 
 function Sidebar() {
   return (
@@ -197,6 +199,12 @@ function NavItemMobile({ icon, label, active }) {
 }
 
 function App() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <div className="h-screen w-full flex bg-[#0d0e12] overflow-hidden selection:bg-primary/30">
       <Sidebar />

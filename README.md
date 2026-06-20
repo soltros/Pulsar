@@ -38,13 +38,11 @@ npm run dev
 
 ## Deployment
 
-Pulsar is designed for containerized deployment, ensuring proxy-agnostic topologies and environmental consistency. The included `docker-compose.yml` mounts both a Navidrome backend (port 4533) and the Pulsar PWA (port 8080).
+Pulsar is designed for containerized deployment, ensuring proxy-agnostic topologies and environmental consistency. The included `docker-compose.yml` builds and serves the standalone Pulsar PWA interface (port 8080). You provide your own external Navidrome URL upon logging in.
 
 ```bash
 # Build and run the entire stack locally
 docker compose up -d --build
 ```
 
-### Proxy Integration
-
-By default, the services bind to the host's ports. If placing the stack behind an external reverse proxy (like Nginx Proxy Manager, Traefik, or Caddy), map your upstream configurations directly to the host IP and the exposed ports (8080 for the UI, 4533 for the API).
+By default, the UI service binds to the host's port `8080`. If placing the application behind an external reverse proxy (like Nginx Proxy Manager, Traefik, or Caddy), map your upstream configurations directly to the host IP and the exposed port (8080).

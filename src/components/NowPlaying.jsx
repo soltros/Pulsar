@@ -82,7 +82,7 @@ export default function NowPlaying() {
         {/* Art, Queue, Lyrics, and Controls Container */}
         <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-24 mt-8 md:mt-0">
           {/* Left Column: Cover Art, Lyrics, or Queue */}
-          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-xl md:max-w-2xl lg:max-w-3xl h-[60vh] md:h-[500px] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
+          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[60vh] md:h-[500px] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
             {nowPlayingTab === 'lyrics' && (
               <div className="w-full h-full overflow-hidden relative mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
                 <LyricsView track={currentTrack} progress={progress} />

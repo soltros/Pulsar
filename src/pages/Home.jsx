@@ -10,8 +10,9 @@ import { useState, useMemo, useEffect } from 'react';
 import PulsarLogo from '../components/PulsarLogo';
 import { useSettingsStore } from '../store/settingsStore';
 
-export function LazyImage({ src, alt, className }) {
+export function LazyImage({ src, alt, className, forceLoadArt }) {
   const [imgSrc, setImgSrc] = useState(null);
+  const autoFetchHomeArt = useSettingsStore(state => state.autoFetchHomeArt ?? true);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   
@@ -21,10 +22,10 @@ export function LazyImage({ src, alt, className }) {
   });
 
   useEffect(() => {
-    if (inView && src && !imgSrc) {
+    if (inView && src && !imgSrc && (autoFetchHomeArt || forceLoadArt)) {
       setImgSrc(src);
     }
-  }, [inView, src, imgSrc]);
+  }, [inView, src, imgSrc, autoFetchHomeArt, forceLoadArt]);
 
   const handleError = () => {
     if (retryCount < 4) {
@@ -60,7 +61,7 @@ export function LazyImage({ src, alt, className }) {
   );
 }
 
-export function ConnectedAlbumCard({ album }) {
+export function ConnectedAlbumCard({ album, forceLoadArt }) {
   const dbAlbum = useLiveQuery(() => db.albums.get(album.id), [album.id]) || album;
   
   return (
@@ -70,7 +71,7 @@ export function ConnectedAlbumCard({ album }) {
           onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbAlbum, 'album')}
           className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500"
         >
-          <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" />
+          <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" forceLoadArt={forceLoadArt} />
           <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
           <button 
             className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
@@ -121,7 +122,7 @@ export function ArtistCard({ artist }) {
   );
 }
 
-export function SongCard({ song }) {
+export function SongCard({ song, forceLoadArt }) {
   const { playTrack, currentIndex, queue, isPlaying, togglePlay } = usePlayerStore();
   const dbSong = useLiveQuery(() => db.songs.get(song.id), [song.id]) || song;
   const isThisPlaying = queue[currentIndex]?.id === dbSong.id;
@@ -139,7 +140,7 @@ export function SongCard({ song }) {
       onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbSong, 'song')}
     >
       <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
-        <LazyImage src={getCoverArtUrl(dbSong.coverArt || dbSong.albumId)} className="w-full h-full" alt="" />
+        <LazyImage src={getCoverArtUrl(dbSong.coverArt || dbSong.albumId)} className="w-full h-full" alt="" forceLoadArt={forceLoadArt} />
         <button className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           {(isThisPlaying && isPlaying) ? (
             <Pause fill="currentColor" className="w-4 h-4 text-white" />
@@ -196,7 +197,7 @@ export function HorizontalRow({ title, items, renderItem, isSyncing }) {
   );
 }
 
-export function SongGridRow({ title, songs }) {
+export function SongGridRow({ title, songs, forceLoadArt }) {
   if (!songs || songs.length === 0) return null;
   return (
     <section className="mb-10">
@@ -204,7 +205,7 @@ export function SongGridRow({ title, songs }) {
         <h2 className="text-xl font-bold text-white">{title}</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {songs.map(song => <SongCard key={song.id} song={song} />)}
+        {songs.map(song => <SongCard key={song.id} song={song} forceLoadArt={forceLoadArt} />)}
       </div>
     </section>
   );
@@ -214,7 +215,8 @@ export default function Home() {
   const playlists = useLiveQuery(() => db.playlists.toArray());
   const homeLists = useLibraryStore((state) => state.homeLists);
   const isSyncing = useLibraryStore((state) => state.isSyncing);
-  const syncLibrary = useLibraryStore((state) => state.syncLibrary);
+  const autoFetchHomeArt = useSettingsStore(state => state.autoFetchHomeArt ?? true);
+  const [forceLoadArt, setForceLoadArt] = useState(false);
 
   const randomPlaylists = useMemo(() => {
     if (!playlists) return [];
@@ -226,14 +228,16 @@ export default function Home() {
       <section className="mb-10 mt-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <h2 className="text-2xl font-bold text-white">Your Playlists</h2>
-          <button 
-            onClick={() => syncLibrary()} 
-            disabled={isSyncing}
-            className="flex items-center justify-center gap-2 bg-primary/20 hover:bg-primary/40 text-primary px-5 py-2.5 rounded-full font-bold text-sm transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Loading Content...' : 'Load Home Content'}
-          </button>
+          {!autoFetchHomeArt && (
+            <button 
+              onClick={() => setForceLoadArt(true)} 
+              disabled={forceLoadArt}
+              className="flex items-center justify-center gap-2 bg-primary/20 hover:bg-primary/40 text-primary px-5 py-2.5 rounded-full font-bold text-sm transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4`} />
+              Load Cover Art
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {randomPlaylists?.length > 0 ? randomPlaylists.map((playlist) => (
@@ -258,19 +262,19 @@ export default function Home() {
       </section>
 
       {/* Categorized Rows */}
-      <HorizontalRow title="Favorites" items={homeLists.favorites} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
-      <HorizontalRow title="Top Rated" items={homeLists.topRated} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
-      <HorizontalRow title="Recently Added" items={homeLists.recentlyAdded} isSyncing={isSyncing} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
-      <HorizontalRow title="Recently Played" items={homeLists.recentlyPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
-      <HorizontalRow title="Most Played" items={homeLists.mostPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+      <HorizontalRow title="Favorites" items={homeLists.favorites} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
+      <HorizontalRow title="Top Rated" items={homeLists.topRated} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
+      <HorizontalRow title="Recently Added" items={homeLists.recentlyAdded} isSyncing={isSyncing} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
+      <HorizontalRow title="Recently Played" items={homeLists.recentlyPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
+      <HorizontalRow title="Most Played" items={homeLists.mostPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
       
       <HorizontalRow title="Artists" items={homeLists.artists} renderItem={(artist) => <ArtistCard artist={artist} />} />
       
-      <SongGridRow title="Random Songs" songs={homeLists.songs} />
+      <SongGridRow title="Random Songs" songs={homeLists.songs} forceLoadArt={forceLoadArt} />
       
       <HorizontalRow title="Internet Radios" items={homeLists.radios} renderItem={(radio) => <RadioCard radio={radio} />} />
       
-      <HorizontalRow title="Random Albums" items={homeLists.random} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+      <HorizontalRow title="Random Albums" items={homeLists.random} renderItem={(album) => <ConnectedAlbumCard album={album} forceLoadArt={forceLoadArt} />} />
       
       {(!homeLists.recentlyAdded || homeLists.recentlyAdded.length === 0) && !isSyncing && (
         <p className="text-white/40 text-sm">No albums found in your library. Is your Navidrome scanning?</p>

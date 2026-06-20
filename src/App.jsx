@@ -408,7 +408,7 @@ function GlobalContextMenu() {
 }
 
 function SettingsModal({ isOpen, onClose }) {
-  const { lastFmApiKey, setLastFmCredentials } = useSettingsStore();
+  const { lastFmApiKey, setLastFmCredentials, autoFetchHomeArt, toggleAutoFetchHomeArt } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
   const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
@@ -544,6 +544,19 @@ function SettingsModal({ isOpen, onClose }) {
           <button onClick={handleSave} className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-xl transition-colors">
             Save Settings
           </button>
+          
+          <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+            <div>
+              <h4 className="text-sm font-semibold text-white">Auto-fetch Home Cover Art</h4>
+              <p className="text-xs text-white/50 mt-1 mr-2">Automatically load images on the home screen. Turn off to prevent 429 errors.</p>
+            </div>
+            <button 
+              onClick={toggleAutoFetchHomeArt}
+              className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${autoFetchHomeArt ? 'bg-primary' : 'bg-white/20'}`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform duration-300 ${autoFetchHomeArt ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/10">
@@ -624,11 +637,10 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    // Only initialize audio session on mount
     if (isAuthenticated) {
-      // Auto-sync removed to prevent 429s. User must prompt manually.
+      syncLibrary();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, syncLibrary]);
 
   if (!isAuthenticated) {
     return <Login />;

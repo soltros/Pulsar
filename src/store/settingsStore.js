@@ -7,6 +7,9 @@ export const useSettingsStore = create(
       lastFmApiKey: import.meta.env.VITE_LASTFM_API_KEY || '',
       lastFmApiSecret: import.meta.env.VITE_LASTFM_API_SECRET || '',
       pinnedPlaylists: [],
+      autoFetchHomeArt: true,
+      
+      toggleAutoFetchHomeArt: () => set((state) => ({ autoFetchHomeArt: !state.autoFetchHomeArt })),
       
       togglePinPlaylist: (playlist) => set((state) => {
         const isPinned = state.pinnedPlaylists.find(p => p.id === playlist.id);

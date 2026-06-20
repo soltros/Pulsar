@@ -203,9 +203,11 @@ function SettingsModal({ isOpen, onClose }) {
   const { lastFmApiKey, setLastFmCredentials } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
+  const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
   const [apiKey, setApiKey] = useState(lastFmApiKey);
   const [isScanning, setIsScanning] = useState(false);
   const [isScanningArtists, setIsScanningArtists] = useState(false);
+  const [isScanningTracks, setIsScanningTracks] = useState(false);
 
   if (!isOpen) return null;
 
@@ -235,6 +237,13 @@ function SettingsModal({ isOpen, onClose }) {
     setIsScanningArtists(true);
     await scanLastFmArtists();
     setIsScanningArtists(false);
+  };
+
+  const handleScanTracks = async () => {
+    if (!lastFmApiKey) return;
+    setIsScanningTracks(true);
+    await scanLastFmTracks();
+    setIsScanningTracks(false);
   };
 
   return (
@@ -268,19 +277,27 @@ function SettingsModal({ isOpen, onClose }) {
           <div className="space-y-3">
             <button 
               onClick={handleScan}
-              disabled={!lastFmApiKey || isScanning || isScanningArtists}
+              disabled={!lastFmApiKey || isScanning || isScanningArtists || isScanningTracks}
               className="w-full flex items-center justify-center gap-2 bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
-              {isScanning ? 'Scanning Last.fm...' : 'Fetch Album Art'}
+              {isScanning ? 'Scanning Last.fm...' : 'Fetch Album Art & Bios'}
             </button>
             <button 
               onClick={handleScanArtists}
-              disabled={!lastFmApiKey || isScanning || isScanningArtists}
+              disabled={!lastFmApiKey || isScanning || isScanningArtists || isScanningTracks}
               className="w-full flex items-center justify-center gap-2 bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isScanningArtists ? 'animate-spin' : ''}`} />
-              {isScanningArtists ? 'Scanning Artists...' : 'Fetch Artist Images'}
+              {isScanningArtists ? 'Scanning Artists...' : 'Fetch Artist Bios'}
+            </button>
+            <button 
+              onClick={handleScanTracks}
+              disabled={!lastFmApiKey || isScanning || isScanningArtists || isScanningTracks}
+              className="w-full flex items-center justify-center gap-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-4 h-4 ${isScanningTracks ? 'animate-spin' : ''}`} />
+              {isScanningTracks ? 'Scanning Tracks...' : 'Fetch Track Bios'}
             </button>
           </div>
         </div>

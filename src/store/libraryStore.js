@@ -73,6 +73,21 @@ export const useLibraryStore = create((set, get) => ({
 
       const songs = songsRes.status === 'fulfilled' ? songsRes.value?.randomSongs?.song || [] : [];
       const radios = radiosRes.status === 'fulfilled' ? radiosRes.value?.internetRadioStations?.internetRadioStation || [] : [];
+
+      // Merge unique songs for IndexedDB
+      const existingSongsArray = await db.songs.toArray();
+      const existingSongs = new Map(existingSongsArray.map(s => [s.id, s]));
+      const songMap = new Map();
+      [...songs].forEach(song => {
+        const existing = existingSongs.get(song.id);
+        if (existing?.lastFmArtUrl) song.lastFmArtUrl = existing.lastFmArtUrl;
+        if (existing?.description) song.description = existing.description;
+        songMap.set(song.id, song);
+      });
+      const uniqueSongs = Array.from(songMap.values());
+      if (uniqueSongs.length > 0) {
+        await db.songs.bulkPut(uniqueSongs);
+      }
       
       // Merge unique albums for IndexedDB local caching
       const existingAlbumsArray = await db.albums.toArray();
@@ -212,6 +227,51 @@ export const useLibraryStore = create((set, get) => ({
       }
     } catch (error) {
       console.error('Last.fm artist scan failed:', error);
+    }
+  },
+
+  scanLastFmTracks: async () => {
+    const { lastFmApiKey } = useSettingsStore.getState();
+    if (!lastFmApiKey) return;
+
+    try {
+      const songs = await db.songs.toArray();
+      for (const track of songs) {
+        if (track.description) continue; // Already scanned
+        if (!track.title || !track.artist) continue;
+
+        try {
+          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(track.artist)}&track=${encodeURIComponent(track.title)}&autocorrect=1&format=json`);
+          if (!res.ok) continue;
+          
+          const data = await res.json();
+          if (data.track) {
+            const updatePayload = {};
+            
+            // Extract Track Wiki/Description
+            if (data.track.wiki && data.track.wiki.summary) {
+              updatePayload.description = data.track.wiki.summary;
+            }
+
+            // Extract Art if available (usually not for tracks anymore, but just in case)
+            if (data.track.album && data.track.album.image) {
+              const imageArray = data.track.album.image;
+              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+              if (xlImage && xlImage['#text']) {
+                updatePayload.lastFmArtUrl = xlImage['#text'];
+              }
+            }
+
+            if (Object.keys(updatePayload).length > 0) {
+              await db.songs.update(track.id, updatePayload);
+            }
+          }
+        } catch (e) {
+          console.debug(`Last.fm scan failed for track ${track.title}:`, e);
+        }
+      }
+    } catch (error) {
+      console.error('Last.fm track scan failed:', error);
     }
   }
 }));

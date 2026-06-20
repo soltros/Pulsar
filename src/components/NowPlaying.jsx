@@ -6,8 +6,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import PulsarLogo from './PulsarLogo';
 import LyricsView from './LyricsView';
+import { useNavigate } from 'react-router-dom';
 
 export default function NowPlaying() {
+  const navigate = useNavigate();
   const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek, nowPlayingTab, setNowPlayingTab, playTrack } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
 
@@ -133,10 +135,39 @@ export default function NowPlaying() {
 
           {/* Info & Controls */}
           <div className="flex flex-col w-full max-w-md md:max-w-xl">
-            <div className="mb-8 text-center md:text-left">
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight line-clamp-2">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h2>
-              <p className="text-xl md:text-2xl font-medium text-white/50">{currentTrack ? currentTrack.artist : 'Select a track to start listening'}</p>
-              {currentTrack?.album && <p className="text-base text-white/30 mt-1">{currentTrack.album}</p>}
+            <div className="mb-8 text-center md:text-left flex flex-col items-center md:items-start">
+              {currentTrack ? (
+                <>
+                  <a 
+                    href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight line-clamp-2 hover:underline decoration-white/30"
+                    title="View on Last.fm"
+                  >
+                    {currentTrack.title}
+                  </a>
+                  <button 
+                    onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }}
+                    className="text-xl md:text-2xl font-medium text-white/50 hover:text-white hover:underline transition-colors"
+                  >
+                    {currentTrack.artist}
+                  </button>
+                  {currentTrack.album && (
+                    <button 
+                      onClick={() => { setIsNowPlayingOpen(false); navigate(`/album/${currentTrack.albumId}`); }}
+                      className="text-base text-white/30 mt-1 hover:text-white/70 hover:underline transition-colors"
+                    >
+                      {currentTrack.album}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight line-clamp-2">Nothing Playing</h2>
+                  <p className="text-xl md:text-2xl font-medium text-white/50">Select a track to start listening</p>
+                </>
+              )}
             </div>
 
             {/* Scrubber */}

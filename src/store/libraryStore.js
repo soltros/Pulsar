@@ -59,6 +59,9 @@ export const useLibraryStore = create((set, get) => ({
           if (existing?.lastFmArtUrl) {
             artist.lastFmArtUrl = existing.lastFmArtUrl;
           }
+          if (existing?.bio) {
+            artist.bio = existing.bio;
+          }
         });
 
         if (allArtists.length > 0) {
@@ -166,15 +169,29 @@ export const useLibraryStore = create((set, get) => ({
         if (!artist.name) continue;
 
         try {
-          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(artist.name)}&format=json`);
+          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(artist.name)}&autocorrect=1&format=json`);
           if (!res.ok) continue;
           
           const data = await res.json();
-          if (data.artist && data.artist.image) {
-            const imageArray = data.artist.image;
-            const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
-            if (xlImage && xlImage['#text']) {
-              await db.artists.update(artist.id, { lastFmArtUrl: xlImage['#text'] });
+          if (data.artist) {
+            const updatePayload = {};
+            
+            // Extract Image
+            if (data.artist.image) {
+              const imageArray = data.artist.image;
+              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+              if (xlImage && xlImage['#text']) {
+                updatePayload.lastFmArtUrl = xlImage['#text'];
+              }
+            }
+            
+            // Extract Biography
+            if (data.artist.bio && data.artist.bio.summary) {
+              updatePayload.bio = data.artist.bio.summary;
+            }
+            
+            if (Object.keys(updatePayload).length > 0) {
+              await db.artists.update(artist.id, updatePayload);
             }
           }
         } catch (e) {

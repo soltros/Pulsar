@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 8080 : 3001);
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 80 : 3001);
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 
 // Use /app/data for docker volume if in production, else local ./data

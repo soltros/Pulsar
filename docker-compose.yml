@@ -14,9 +14,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: pulsar_web
-    # Binds the server to host port 8080
+    # Binds the server to host port 80
     ports:
-      - "8080:8080"
+      - "80:80"
     networks:
       - pulsar_net
     volumes:

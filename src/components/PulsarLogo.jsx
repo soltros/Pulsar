@@ -1,18 +1,22 @@
-export default function PulsarLogo({ className = "w-6 h-6", classNameInner = "" }) {
+export default function PulsarLogo({ className = "w-6 h-6" }) {
   return (
     <svg 
       viewBox="0 0 24 24" 
       fill="none" 
       stroke="currentColor" 
-      strokeWidth="2" 
+      strokeWidth="1.5" 
       strokeLinecap="round" 
       strokeLinejoin="round" 
       className={className}
     >
-      <circle cx="12" cy="12" r="3" fill="currentColor" className={classNameInner} />
-      <path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10l2.1 2.1M4.9 19.1l2.1-2.1m10-10l2.1-2.1" opacity="0.4"/>
-      <circle cx="12" cy="12" r="8" strokeDasharray="4 4" className="animate-[spin_15s_linear_infinite]" />
-      <circle cx="12" cy="12" r="11" opacity="0.1" />
+      {/* Outer Diamond */}
+      <polygon points="12,2 22,11 12,22 2,11" />
+      {/* Inner 3D Facets */}
+      <polygon points="12,2 17,11 12,22 7,11" />
+      {/* Vertical Core Line */}
+      <line x1="12" y1="2" x2="12" y2="22" />
+      {/* Horizontal Horizon Line (Retrofuture Grid aesthetic) */}
+      <line x1="2" y1="11" x2="22" y2="11" opacity="0.3" />
     </svg>
   );
 }

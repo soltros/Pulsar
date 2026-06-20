@@ -6,7 +6,7 @@ import { db } from '../lib/db';
 import { getCoverArtUrl } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import PulsarLogo from '../components/PulsarLogo';
 
 function LazyImage({ src, alt, className }) {
@@ -17,7 +17,7 @@ function LazyImage({ src, alt, className }) {
   });
 
   return (
-    <div ref={ref} className={`bg-gradient-to-br from-[#181926] to-[#0f1018] flex items-center justify-center relative border border-white/5 ${className}`}>
+    <div ref={ref} className={`bg-gradient-to-br from-rose-500/20 to-orange-500/20 flex items-center justify-center relative border border-white/5 ${className}`}>
       {inView && !hasError && (
         <img 
           src={src} 
@@ -147,12 +147,17 @@ export default function Home() {
   const homeLists = useLibraryStore((state) => state.homeLists);
   const isSyncing = useLibraryStore((state) => state.isSyncing);
 
+  const randomPlaylists = useMemo(() => {
+    if (!playlists) return [];
+    return [...playlists].sort(() => 0.5 - Math.random()).slice(0, 6);
+  }, [playlists]);
+
   return (
     <div className="px-6 pb-24">
       <section className="mb-10 mt-4">
         <h2 className="text-2xl font-bold text-white mb-6">Your Playlists</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {playlists?.length > 0 ? playlists.map((playlist) => (
+          {randomPlaylists?.length > 0 ? randomPlaylists.map((playlist) => (
             <Link to={`/playlist/${playlist.id}`} key={playlist.id} className="flex items-center bg-white/5 hover:bg-white/10 rounded-md overflow-hidden cursor-pointer transition-colors group">
               <div className="w-16 h-16 bg-white/10 flex items-center justify-center shadow-md shrink-0">
                  <ListMusic className="text-white/50 w-6 h-6" />

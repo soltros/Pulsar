@@ -76,21 +76,23 @@ export function ArtistCard({ artist }) {
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div className="group cursor-pointer w-full flex flex-col items-center">
-      <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/5 flex items-center justify-center">
-        {dbArtist.lastFmArtUrl && !hasError ? (
-          <img 
-            src={dbArtist.lastFmArtUrl} 
-            alt={dbArtist.name} 
-            className="w-full h-full object-cover transition-opacity duration-700" 
-            onError={() => setHasError(true)}
-          />
-        ) : (
-          <PulsarLogo className="w-1/2 h-1/2 text-primary opacity-80" />
-        )}
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
-      </div>
-      <h3 className="text-white font-semibold text-sm truncate w-full text-center" title={dbArtist.name}>{dbArtist.name}</h3>
+    <div className="group cursor-pointer w-full block">
+      <Link to={`/artist/${dbArtist.id}`} className="flex flex-col items-center">
+        <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/5 flex items-center justify-center">
+          {dbArtist.lastFmArtUrl && !hasError ? (
+            <img 
+              src={dbArtist.lastFmArtUrl} 
+              alt={dbArtist.name} 
+              className="w-full h-full object-cover transition-opacity duration-700 group-hover:scale-105" 
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <PulsarLogo className="w-1/2 h-1/2 text-primary opacity-80" />
+          )}
+          <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+        </div>
+        <h3 className="text-white font-semibold text-sm truncate w-full text-center group-hover:text-primary transition-colors" title={dbArtist.name}>{dbArtist.name}</h3>
+      </Link>
     </div>
   );
 }

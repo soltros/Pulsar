@@ -84,6 +84,9 @@ export const useLibraryStore = create((set, get) => ({
         if (existing?.lastFmArtUrl) {
           album.lastFmArtUrl = existing.lastFmArtUrl;
         }
+        if (existing?.description) {
+          album.description = existing.description;
+        }
         albumMap.set(album.id, album);
       });
       
@@ -131,18 +134,27 @@ export const useLibraryStore = create((set, get) => ({
         if (!album.artist || !album.name) continue;
 
         try {
-          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.name)}&format=json`);
+          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.name)}&autocorrect=1&format=json`);
           if (!res.ok) continue;
           
           const data = await res.json();
-          if (data.album && data.album.image) {
-            // Find the Extra Large or Mega image
-            const imageArray = data.album.image;
-            const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+          if (data.album) {
+            const updatePayload = {};
             
-            if (xlImage && xlImage['#text']) {
-              // Update local DB album with the Last.fm art URL
-              await db.albums.update(album.id, { lastFmArtUrl: xlImage['#text'] });
+            if (data.album.image) {
+              const imageArray = data.album.image;
+              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
+              if (xlImage && xlImage['#text']) {
+                updatePayload.lastFmArtUrl = xlImage['#text'];
+              }
+            }
+            
+            if (data.album.wiki && data.album.wiki.summary) {
+              updatePayload.description = data.album.wiki.summary;
+            }
+            
+            if (Object.keys(updatePayload).length > 0) {
+              await db.albums.update(album.id, updatePayload);
             }
           }
         } catch (e) {

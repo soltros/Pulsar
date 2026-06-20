@@ -624,10 +624,11 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
+    // Only initialize audio session on mount
     if (isAuthenticated) {
-      syncLibrary();
+      // Auto-sync removed to prevent 429s. User must prompt manually.
     }
-  }, [isAuthenticated, syncLibrary]);
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return <Login />;

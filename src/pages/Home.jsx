@@ -1,4 +1,4 @@
-import { Play, Pause, Mic2, ListMusic, Heart } from 'lucide-react';
+import { Play, Pause, Mic2, ListMusic, Heart, RefreshCw } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -214,6 +214,7 @@ export default function Home() {
   const playlists = useLiveQuery(() => db.playlists.toArray());
   const homeLists = useLibraryStore((state) => state.homeLists);
   const isSyncing = useLibraryStore((state) => state.isSyncing);
+  const syncLibrary = useLibraryStore((state) => state.syncLibrary);
 
   const randomPlaylists = useMemo(() => {
     if (!playlists) return [];
@@ -223,7 +224,17 @@ export default function Home() {
   return (
     <div className="px-6 pb-24">
       <section className="mb-10 mt-4">
-        <h2 className="text-2xl font-bold text-white mb-6">Your Playlists</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <h2 className="text-2xl font-bold text-white">Your Playlists</h2>
+          <button 
+            onClick={() => syncLibrary()} 
+            disabled={isSyncing}
+            className="flex items-center justify-center gap-2 bg-primary/20 hover:bg-primary/40 text-primary px-5 py-2.5 rounded-full font-bold text-sm transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Loading Content...' : 'Load Home Content'}
+          </button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {randomPlaylists?.length > 0 ? randomPlaylists.map((playlist) => (
             <Link to={`/playlist/${playlist.id}`} key={playlist.id} className="flex items-center bg-white/5 hover:bg-white/10 rounded-md overflow-hidden cursor-pointer transition-colors group">

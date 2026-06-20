@@ -45,13 +45,16 @@ export const useLibraryStore = create((set, get) => ({
       const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
       const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
       
-      let artists = [];
+      let allArtists = [];
       if (artistsRes.status === 'fulfilled' && artistsRes.value?.artists?.index) {
         artistsRes.value.artists.index.forEach(idx => {
-          if (idx.artist) artists.push(...idx.artist);
+          if (idx.artist) allArtists.push(...idx.artist);
         });
-        // Shuffle and pick 15
-        artists = artists.sort(() => 0.5 - Math.random()).slice(0, 15);
+        if (allArtists.length > 0) {
+          await db.artists.bulkPut(allArtists);
+        }
+        // Shuffle and pick 15 for home
+        artists = [...allArtists].sort(() => 0.5 - Math.random()).slice(0, 15);
       }
 
       const songs = songsRes.status === 'fulfilled' ? songsRes.value?.randomSongs?.song || [] : [];

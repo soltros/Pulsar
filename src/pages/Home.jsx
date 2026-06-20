@@ -10,7 +10,7 @@ import { useState, useMemo, useEffect } from 'react';
 import PulsarLogo from '../components/PulsarLogo';
 import { useSettingsStore } from '../store/settingsStore';
 
-function LazyImage({ src, alt, className }) {
+export function LazyImage({ src, alt, className }) {
   const [hasError, setHasError] = useState(false);
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -36,7 +36,7 @@ function LazyImage({ src, alt, className }) {
   );
 }
 
-function ConnectedAlbumCard({ album }) {
+export function ConnectedAlbumCard({ album }) {
   const dbAlbum = useLiveQuery(() => db.albums.get(album.id), [album.id]) || album;
   
   return (
@@ -54,7 +54,7 @@ function ConnectedAlbumCard({ album }) {
   );
 }
 
-function ArtistCard({ artist }) {
+export function ArtistCard({ artist }) {
   const [imgUrl, setImgUrl] = useState(null);
   const [hasError, setHasError] = useState(false);
   const lastFmApiKey = useSettingsStore(state => state.lastFmApiKey);
@@ -98,7 +98,7 @@ function ArtistCard({ artist }) {
   );
 }
 
-function SongCard({ song }) {
+export function SongCard({ song }) {
   const { playTrack, currentIndex, queue, isPlaying, togglePlay } = usePlayerStore();
   const isThisPlaying = queue[currentIndex]?.id === song.id;
 

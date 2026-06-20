@@ -10,6 +10,7 @@ import { getCoverArtUrl } from './lib/api';
 import Login from './components/Login';
 import Home from './pages/Home';
 import AlbumView from './pages/AlbumView';
+import ArtistView from './pages/ArtistView';
 import PlaylistView from './pages/PlaylistView';
 import LibraryView from './pages/LibraryView';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
@@ -351,6 +352,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/library" element={<LibraryView />} />
           <Route path="/album/:id" element={<AlbumView />} />
+          <Route path="/artist/:id" element={<ArtistView />} />
           <Route path="/playlist/:id" element={<PlaylistView />} />
         </Routes>
       </main>

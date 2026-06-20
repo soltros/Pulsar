@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../lib/db';
 import { fetchApi, getCoverArtUrl } from '../lib/api';
 import { usePlayerStore } from '../store/playerStore';
-import { Play, Clock, Hash, Pause } from 'lucide-react';
+import { Play, Clock, Hash, Pause, Calendar } from 'lucide-react';
 import PulsarLogo from '../components/PulsarLogo';
+import { Link } from 'react-router-dom';
 
 export default function AlbumView() {
   const { id } = useParams();
-  const [album, setAlbum] = useState(null);
+  const dbAlbum = useLiveQuery(() => db.albums.get(id), [id]);
+  const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -20,7 +24,7 @@ export default function AlbumView() {
       try {
         const data = await fetchApi('getAlbum', { id });
         if (data.album) {
-          setAlbum(data.album);
+          setAlbumData(data.album);
         }
       } catch (err) {
         setError(err.message);
@@ -31,6 +35,8 @@ export default function AlbumView() {
     loadAlbum();
   }, [id]);
 
+  const album = dbAlbum || albumData;
+
   const formatTime = (seconds) => {
     if (!seconds) return '0:00';
     const m = Math.floor(seconds / 60);
@@ -38,14 +44,14 @@ export default function AlbumView() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const isCurrentAlbumPlaying = queue.length > 0 && album?.song && queue[0].albumId === album.id;
+  const isCurrentAlbumPlaying = queue.length > 0 && albumData?.song && queue[0].albumId === albumData.id;
 
   const handlePlayAll = () => {
-    if (!album?.song?.length) return;
+    if (!albumData?.song?.length) return;
     if (isCurrentAlbumPlaying) {
       togglePlay();
     } else {
-      playTrack(album.song[0], album.song, 0);
+      playTrack(albumData.song[0], albumData.song, 0);
     }
   };
 
@@ -71,7 +77,7 @@ export default function AlbumView() {
       <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
         <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5">
           <img 
-            src={getCoverArtUrl(album.coverArt || album.id, 400)} 
+            src={album.lastFmArtUrl || getCoverArtUrl(album.coverArt || album.id, 400)} 
             alt={album.name} 
             className="w-full h-full object-cover" 
           />
@@ -80,7 +86,7 @@ export default function AlbumView() {
           <span className="text-xs font-bold tracking-wider text-white/50 uppercase">Album</span>
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">{album.name}</h1>
           <div className="flex items-center gap-2 mt-2">
-            <span className="font-semibold text-white">{album.artist}</span>
+            <Link to={`/artist/${album.artistId || albumData?.artistId}`} className="font-semibold text-white hover:underline">{album.artist}</Link>
             <span className="text-white/30">•</span>
             <span className="text-white/70">{album.year || 'Unknown Year'}</span>
             <span className="text-white/30">•</span>
@@ -96,6 +102,15 @@ export default function AlbumView() {
         </div>
       </div>
 
+      {album.description && (
+        <div className="px-8 pt-8">
+          <div className="bg-white/5 rounded-2xl p-6 text-white/80 leading-relaxed max-w-4xl text-sm border border-white/5">
+            <h3 className="font-semibold text-white mb-2 uppercase tracking-wider text-xs">About this album</h3>
+            <div dangerouslySetInnerHTML={{ __html: album.description.replace(/\n/g, '<br />') }} />
+          </div>
+        </div>
+      )}
+
       {/* Tracklist */}
       <div className="p-8">
         <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
@@ -105,13 +120,13 @@ export default function AlbumView() {
         </div>
         
         <div className="flex flex-col">
-          {album.song?.map((track, index) => {
+          {albumData?.song?.map((track, index) => {
             const isTrackPlaying = isCurrentAlbumPlaying && currentIndex === index;
             
             return (
               <div 
                 key={track.id}
-                onClick={() => playTrack(track, album.song, index)}
+                onClick={() => playTrack(track, albumData.song, index)}
                 className={`grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-3 rounded-lg cursor-pointer group transition-colors ${
                   isTrackPlaying ? 'bg-white/10' : 'hover:bg-white/5'
                 }`}

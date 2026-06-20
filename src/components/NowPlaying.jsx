@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2 } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2, ListMusic, Clock, Image as ImageIcon } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { getCoverArtUrl } from '../lib/api';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -8,9 +8,8 @@ import PulsarLogo from './PulsarLogo';
 import LyricsView from './LyricsView';
 
 export default function NowPlaying() {
-  const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek } = usePlayerStore();
+  const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek, nowPlayingTab, setNowPlayingTab, playTrack } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
-  const [showLyrics, setShowLyrics] = useState(false);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -51,23 +50,75 @@ export default function NowPlaying() {
           >
             <ChevronDown className="w-6 h-6" />
           </button>
-          <span className="text-xs font-semibold tracking-[0.2em] text-white/50 uppercase">Now Playing</span>
-          <button 
-            onClick={() => setShowLyrics(!showLyrics)}
-            className={`p-3 rounded-full transition-colors backdrop-blur-md ${showLyrics ? 'bg-primary text-white shadow-[0_0_15px_rgba(244,63,94,0.5)]' : 'bg-white/5 hover:bg-white/10 text-white/50 hover:text-white'}`}
-            title="Toggle Lyrics"
-          >
-            <Mic2 className="w-6 h-6" />
-          </button>
+          
+          <div className="flex bg-white/5 rounded-full p-1 backdrop-blur-md">
+            <button 
+              onClick={() => setNowPlayingTab('art')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'art' ? 'bg-white/20 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+            >
+              ARTWORK
+            </button>
+            <button 
+              onClick={() => setNowPlayingTab('lyrics')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'lyrics' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+            >
+              LYRICS
+            </button>
+            <button 
+              onClick={() => setNowPlayingTab('queue')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'queue' ? 'bg-blue-500 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+            >
+              UP NEXT
+            </button>
+          </div>
+          
+          <div className="w-12 h-12" /> {/* Spacer to balance header */}
         </div>
 
-        {/* Art and Controls Container */}
+        {/* Art, Queue, Lyrics, and Controls Container */}
         <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-24 mt-8 md:mt-0">
-          {/* Left Column: Cover Art or Lyrics */}
-          <div className={`w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 flex items-center justify-center transition-all duration-500 ${showLyrics ? '' : 'rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10'}`}>
-            {showLyrics ? (
-              <LyricsView track={currentTrack} progress={progress} />
-            ) : coverUrl && !hasError ? (
+          {/* Left Column: Cover Art, Lyrics, or Queue */}
+          <div className={`w-full max-w-[320px] md:max-w-[460px] ${nowPlayingTab === 'art' ? 'aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'h-[60vh] md:h-[500px] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
+            {nowPlayingTab === 'lyrics' && (
+              <div className="w-full h-full overflow-hidden relative mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+                <LyricsView track={currentTrack} progress={progress} />
+              </div>
+            )}
+            
+            {nowPlayingTab === 'queue' && (
+              <div className="w-full h-full bg-black/40 rounded-3xl border border-white/10 p-4 overflow-y-auto hide-scrollbar mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)' }}>
+                <h3 className="text-white font-bold mb-4 px-2">Up Next</h3>
+                <div className="flex flex-col gap-1">
+                  {queue.map((track, idx) => {
+                    const isTrackPlaying = currentIndex === idx;
+                    return (
+                      <div 
+                        key={`${track.id}-${idx}`}
+                        onClick={() => playTrack(track, queue, idx)}
+                        className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer group transition-colors ${isTrackPlaying ? 'bg-blue-500/20' : 'hover:bg-white/10'}`}
+                      >
+                        <div className="w-10 h-10 rounded-md overflow-hidden bg-white/5 shrink-0 relative flex items-center justify-center">
+                          <img src={getCoverArtUrl(track.coverArt || track.albumId, 100)} alt="" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            {isTrackPlaying && isPlaying ? <Pause className="w-4 h-4 text-white" fill="currentColor" /> : <Play className="w-4 h-4 text-white ml-0.5" fill="currentColor" />}
+                          </div>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <div className={`font-semibold text-sm truncate ${isTrackPlaying ? 'text-blue-400' : 'text-white group-hover:text-white'}`}>{track.title}</div>
+                          <div className="text-white/50 text-xs truncate">{track.artist}</div>
+                        </div>
+                        <div className="text-xs font-medium text-white/30 mr-2">
+                          {formatTime(track.duration)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {nowPlayingTab === 'art' && (
+              coverUrl && !hasError ? (
               <img 
                 src={coverUrl} 
                 alt="Cover" 

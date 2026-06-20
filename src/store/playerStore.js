@@ -9,14 +9,18 @@ export const usePlayerStore = create((set, get) => ({
   duration: 0,
   audioRef: null,
   isNowPlayingOpen: false,
+  nowPlayingTab: 'art',
 
   setAudioRef: (ref) => set({ audioRef: ref }),
   setIsNowPlayingOpen: (open) => set({ isNowPlayingOpen: open }),
+  setNowPlayingTab: (tab) => set({ nowPlayingTab: tab }),
 
   playTrack: (track, newQueue = null, index = 0) => {
     const queue = newQueue || [track];
     set({ queue, currentIndex: index, isPlaying: true, progress: 0 });
   },
+
+  setQueue: (queue) => set({ queue }),
 
   playNext: () => {
     const { queue, currentIndex } = get();

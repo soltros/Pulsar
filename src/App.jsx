@@ -120,7 +120,7 @@ function TopBar({ onOpenSettings, onOpenSidebar }) {
 }
 
 function PlayerBar() {
-  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen } = usePlayerStore();
+  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen, setNowPlayingTab } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
   const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
   const [hasError, setHasError] = useState(false);
@@ -187,9 +187,22 @@ function PlayerBar() {
         </div>
       </div>
 
-      <div className="w-1/4 flex justify-end items-center gap-4 hidden md:flex">
-         <button className="text-white/50 hover:text-white transition-colors"><Mic2 className="w-4 h-4" /></button>
-         <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer">
+      <div className="w-1/4 flex justify-end items-center gap-4 hidden md:flex pr-4">
+         <button 
+           onClick={() => { setIsNowPlayingOpen(true); setNowPlayingTab('queue'); }}
+           className="text-white/50 hover:text-white transition-colors"
+           title="Up Next"
+         >
+           <ListMusic className="w-4 h-4" />
+         </button>
+         <button 
+           onClick={() => { setIsNowPlayingOpen(true); setNowPlayingTab('lyrics'); }}
+           className="text-white/50 hover:text-white transition-colors"
+           title="Lyrics"
+         >
+           <Mic2 className="w-4 h-4" />
+         </button>
+         <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer ml-2">
             <div className="w-2/3 h-full bg-white/80" />
          </div>
       </div>

@@ -192,7 +192,10 @@ export const useLibraryStore = create((set, get) => ({
     try {
       const artists = await db.artists.toArray();
       for (const artist of artists) {
-        if (artist.lastFmArtUrl) continue;
+        const isGreyStar = artist.lastFmArtUrl && artist.lastFmArtUrl.includes('2a96cbd8b46e442fc41c2b86b821562f');
+        
+        // Skip if they already have valid data
+        if (artist.lastFmArtUrl && !isGreyStar && artist.bio) continue;
         if (!artist.name) continue;
 
         try {
@@ -203,11 +206,11 @@ export const useLibraryStore = create((set, get) => ({
           if (data.artist) {
             const updatePayload = {};
             
-            // Extract Image
+            // Extract Image, rejecting the default Last.fm grey star
             if (data.artist.image) {
               const imageArray = data.artist.image;
               const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
-              if (xlImage && xlImage['#text']) {
+              if (xlImage && xlImage['#text'] && !xlImage['#text'].includes('2a96cbd8b46e442fc41c2b86b821562f')) {
                 updatePayload.lastFmArtUrl = xlImage['#text'];
               }
             }
@@ -215,6 +218,21 @@ export const useLibraryStore = create((set, get) => ({
             // Extract Biography
             if (data.artist.bio && data.artist.bio.summary) {
               updatePayload.bio = data.artist.bio.summary;
+            }
+
+            // Fallback to Subsonic backend for Artist Image if Last.fm failed to provide one
+            if (!updatePayload.lastFmArtUrl && (!artist.lastFmArtUrl || isGreyStar)) {
+              try {
+                const subInfo = await fetchApi('getArtistInfo2', { id: artist.id }).catch(() => null);
+                if (subInfo?.artistInfo2?.largeImageUrl || subInfo?.artistInfo2?.mediumImageUrl) {
+                  updatePayload.lastFmArtUrl = subInfo.artistInfo2.largeImageUrl || subInfo.artistInfo2.mediumImageUrl;
+                }
+              } catch(e) {}
+            }
+
+            // Clear the existing grey star if we couldn't find a replacement
+            if (isGreyStar && !updatePayload.lastFmArtUrl) {
+              updatePayload.lastFmArtUrl = '';
             }
             
             if (Object.keys(updatePayload).length > 0) {

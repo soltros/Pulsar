@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, Disc3, X, RefreshCw } from 'lucide-react';
+import { Home as HomeIcon, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw } from 'lucide-react';
+import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
 import { useSettingsStore } from './store/settingsStore';
@@ -13,8 +14,8 @@ function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 h-full pb-24">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
-          <Disc3 className="text-white w-5 h-5" />
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center shadow-[0_0_20px_rgba(170,59,255,0.4)]">
+          <PulsarLogo className="text-white w-5 h-5" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-white">Pulsar</h1>
       </div>

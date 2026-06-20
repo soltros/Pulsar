@@ -1,4 +1,4 @@
-import { Disc3, Play, Mic2, ListMusic } from 'lucide-react';
+import { Play, Mic2, ListMusic } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
@@ -6,6 +6,7 @@ import { getCoverArtUrl } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import { useState } from 'react';
+import PulsarLogo from '../components/PulsarLogo';
 
 function LazyImage({ src, alt, className }) {
   const [hasError, setHasError] = useState(false);
@@ -15,17 +16,19 @@ function LazyImage({ src, alt, className }) {
   });
 
   return (
-    <div ref={ref} className={`bg-white/5 flex items-center justify-center relative ${className}`}>
+    <div ref={ref} className={`bg-gradient-to-br from-[#181926] to-[#0f1018] flex items-center justify-center relative border border-white/5 ${className}`}>
       {inView && !hasError && (
         <img 
           src={src} 
           alt={alt} 
-          className={`w-full h-full object-cover transition-opacity duration-500 text-transparent absolute inset-0 z-10`} 
+          className={`w-full h-full object-cover transition-opacity duration-700 text-transparent absolute inset-0 z-10`} 
           onError={() => setHasError(true)}
         />
       )}
       {(hasError || !inView) && (
-        <Disc3 className="w-1/3 h-1/3 text-white/10 absolute z-0" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 z-0">
+          <PulsarLogo className="w-1/3 h-1/3 text-primary/50" />
+        </div>
       )}
     </div>
   );

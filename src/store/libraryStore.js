@@ -175,12 +175,6 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   scanLastFmArt: async () => {
-    const { lastFmApiKey } = useSettingsStore.getState();
-    if (!lastFmApiKey) {
-      console.warn('Cannot scan Last.fm without API key');
-      return;
-    }
-
     try {
       // Get all albums currently in our local DB
       const albums = await db.albums.toArray();
@@ -191,32 +185,21 @@ export const useLibraryStore = create((set, get) => ({
         if (!album.artist || !album.name) continue;
 
         try {
-          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.name)}&autocorrect=1&format=json`);
+          const res = await fetch(`/api/metadata/album?id=${album.id}&name=${encodeURIComponent(album.name)}&artist=${encodeURIComponent(album.artist)}`);
           if (!res.ok) continue;
           
           const data = await res.json();
-          if (data.album) {
+          if (data && Object.keys(data).length > 0) {
             const updatePayload = {};
-            
-            if (data.album.image) {
-              const imageArray = data.album.image;
-              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
-              if (xlImage && xlImage['#text']) {
-                updatePayload.lastFmArtUrl = xlImage['#text'];
-              }
-            }
-            
-            if (data.album.wiki && data.album.wiki.summary) {
-              updatePayload.description = data.album.wiki.summary;
-            }
+            if (data.lastFmArtUrl) updatePayload.lastFmArtUrl = data.lastFmArtUrl;
+            if (data.description) updatePayload.description = data.description;
             
             if (Object.keys(updatePayload).length > 0) {
               await db.albums.update(album.id, updatePayload);
             }
           }
         } catch (e) {
-          // Silently continue on individual album failures to not break the batch
-          console.debug(`Last.fm scan failed for ${album.name}:`, e);
+          console.debug(`Metadata scan failed for ${album.name}:`, e);
         }
       }
     } catch (error) {
@@ -225,45 +208,26 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   scanLastFmArtists: async () => {
-    const { lastFmApiKey } = useSettingsStore.getState();
-    if (!lastFmApiKey) {
-      console.warn('Cannot scan Last.fm without API key');
-      return;
-    }
-
     try {
       const artists = await db.artists.toArray();
       for (const artist of artists) {
-        const isGreyStar = artist.lastFmArtUrl && artist.lastFmArtUrl.includes('2a96cbd8b46e442fc41c2b86b821562f');
-        
         // Skip if they already have valid data
-        if (artist.lastFmArtUrl && !isGreyStar && artist.bio) continue;
+        if (artist.lastFmArtUrl && artist.bio) continue;
         if (!artist.name) continue;
 
         try {
-          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(artist.name)}&autocorrect=1&format=json`);
+          const res = await fetch(`/api/metadata/artist?id=${artist.id}&name=${encodeURIComponent(artist.name)}`);
           if (!res.ok) continue;
           
           const data = await res.json();
-          if (data.artist) {
+          if (data && Object.keys(data).length > 0) {
             const updatePayload = {};
             
-            // Extract Image, rejecting the default Last.fm grey star
-            if (data.artist.image) {
-              const imageArray = data.artist.image;
-              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
-              if (xlImage && xlImage['#text'] && !xlImage['#text'].includes('2a96cbd8b46e442fc41c2b86b821562f')) {
-                updatePayload.lastFmArtUrl = xlImage['#text'];
-              }
-            }
-            
-            // Extract Biography
-            if (data.artist.bio && data.artist.bio.summary) {
-              updatePayload.bio = data.artist.bio.summary;
-            }
+            if (data.lastFmArtUrl) updatePayload.lastFmArtUrl = data.lastFmArtUrl;
+            if (data.bio) updatePayload.bio = data.bio;
 
-            // Fallback to Subsonic backend for Artist Image if Last.fm failed to provide one
-            if (!updatePayload.lastFmArtUrl && (!artist.lastFmArtUrl || isGreyStar)) {
+            // Fallback to Subsonic backend for Artist Image if backend didn't provide one
+            if (!updatePayload.lastFmArtUrl && !artist.lastFmArtUrl) {
               try {
                 const subInfo = await fetchApi('getArtistInfo2', { id: artist.id }).catch(() => null);
                 if (subInfo?.artistInfo2?.largeImageUrl || subInfo?.artistInfo2?.mediumImageUrl) {
@@ -271,29 +235,21 @@ export const useLibraryStore = create((set, get) => ({
                 }
               } catch(e) {}
             }
-
-            // Clear the existing grey star if we couldn't find a replacement
-            if (isGreyStar && !updatePayload.lastFmArtUrl) {
-              updatePayload.lastFmArtUrl = '';
-            }
             
             if (Object.keys(updatePayload).length > 0) {
               await db.artists.update(artist.id, updatePayload);
             }
           }
         } catch (e) {
-          console.debug(`Last.fm scan failed for artist ${artist.name}:`, e);
+          console.debug(`Metadata scan failed for artist ${artist.name}:`, e);
         }
       }
     } catch (error) {
-      console.error('Last.fm artist scan failed:', error);
+      console.error('Artist scan failed:', error);
     }
   },
 
   scanLastFmTracks: async () => {
-    const { lastFmApiKey } = useSettingsStore.getState();
-    if (!lastFmApiKey) return;
-
     try {
       const songs = await db.songs.toArray();
       for (const track of songs) {
@@ -301,37 +257,26 @@ export const useLibraryStore = create((set, get) => ({
         if (!track.title || !track.artist) continue;
 
         try {
-          const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=${lastFmApiKey}&artist=${encodeURIComponent(track.artist)}&track=${encodeURIComponent(track.title)}&autocorrect=1&format=json`);
+          const res = await fetch(`/api/metadata/track?id=${track.id}&title=${encodeURIComponent(track.title)}&artist=${encodeURIComponent(track.artist)}`);
           if (!res.ok) continue;
           
           const data = await res.json();
-          if (data.track) {
+          if (data && Object.keys(data).length > 0) {
             const updatePayload = {};
             
-            // Extract Track Wiki/Description
-            if (data.track.wiki && data.track.wiki.summary) {
-              updatePayload.description = data.track.wiki.summary;
-            }
-
-            // Extract Art if available (usually not for tracks anymore, but just in case)
-            if (data.track.album && data.track.album.image) {
-              const imageArray = data.track.album.image;
-              const xlImage = imageArray.find(img => img.size === 'extralarge') || imageArray.find(img => img.size === 'mega');
-              if (xlImage && xlImage['#text']) {
-                updatePayload.lastFmArtUrl = xlImage['#text'];
-              }
-            }
+            if (data.description) updatePayload.description = data.description;
+            if (data.lastFmArtUrl) updatePayload.lastFmArtUrl = data.lastFmArtUrl;
 
             if (Object.keys(updatePayload).length > 0) {
               await db.songs.update(track.id, updatePayload);
             }
           }
         } catch (e) {
-          console.debug(`Last.fm scan failed for track ${track.title}:`, e);
+          console.debug(`Metadata scan failed for track ${track.title}:`, e);
         }
       }
     } catch (error) {
-      console.error('Last.fm track scan failed:', error);
+      console.error('Track scan failed:', error);
     }
   }
 }));

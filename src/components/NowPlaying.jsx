@@ -45,7 +45,7 @@ export default function NowPlaying() {
       )}
 
       {/* Main content */}
-      <div className="relative z-10 h-full flex flex-col p-6 md:p-12 max-w-6xl mx-auto">
+      <div className="relative z-10 h-full flex flex-col p-4 sm:p-6 md:p-12 max-w-6xl mx-auto overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between shrink-0">
           <button 
@@ -58,19 +58,19 @@ export default function NowPlaying() {
           <div className="flex bg-white/5 rounded-full p-1 backdrop-blur-md">
             <button 
               onClick={() => setNowPlayingTab('art')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'art' ? 'bg-white/20 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'art' ? 'bg-white/20 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
             >
               ARTWORK
             </button>
             <button 
               onClick={() => setNowPlayingTab('lyrics')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'lyrics' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'lyrics' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white'}`}
             >
               LYRICS
             </button>
             <button 
               onClick={() => setNowPlayingTab('queue')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'queue' ? 'bg-blue-500 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-wider transition-all ${nowPlayingTab === 'queue' ? 'bg-blue-500 text-white shadow-md' : 'text-white/50 hover:text-white'}`}
             >
               UP NEXT
             </button>
@@ -80,9 +80,9 @@ export default function NowPlaying() {
         </div>
 
         {/* Art, Queue, Lyrics, and Controls Container */}
-        <div className={`flex-1 flex flex-col ${nowPlayingTab === 'art' ? 'lg:flex-row' : ''} items-center justify-center gap-8 lg:gap-16 mt-8 md:mt-0 w-full max-w-full`}>
+        <div className={`flex-1 flex flex-col ${nowPlayingTab === 'art' ? 'lg:flex-row' : ''} items-center justify-center gap-6 lg:gap-16 mt-6 md:mt-0 w-full max-w-full pb-10`}>
           {/* Left Column: Cover Art, Lyrics, or Queue */}
-          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-full h-[55vh] md:h-[65vh] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
+          <div className={`w-full ${nowPlayingTab === 'art' ? 'max-w-[280px] sm:max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10' : 'max-w-full h-[50vh] md:h-[65vh] flex flex-col'} flex items-center justify-center transition-all duration-500`}>
             {nowPlayingTab === 'lyrics' && (
               <div className="w-full h-full overflow-hidden relative mask-image-fade" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
                 <LyricsView track={currentTrack} progress={progress} />
@@ -158,8 +158,8 @@ export default function NowPlaying() {
           </div>
 
           {/* Info & Controls */}
-          <div className={`flex flex-col w-full ${nowPlayingTab === 'art' ? 'max-w-md md:max-w-xl' : 'max-w-3xl'}`}>
-            <div className={`mb-8 text-center flex flex-col items-center ${nowPlayingTab === 'art' ? 'lg:text-left lg:items-start' : ''}`}>
+          <div className={`flex flex-col w-full ${nowPlayingTab === 'art' ? 'max-w-md md:max-w-xl' : 'max-w-3xl'} shrink-0`}>
+            <div className={`mb-6 md:mb-8 text-center flex flex-col items-center ${nowPlayingTab === 'art' ? 'lg:text-left lg:items-start' : ''}`}>
               {currentTrack ? (
                 <>
                   <div className="flex items-center gap-4 mb-4">
@@ -167,7 +167,7 @@ export default function NowPlaying() {
                       href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30"
+                      className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30"
                       title="View on Last.fm"
                     >
                       {currentTrack.title}
@@ -181,7 +181,7 @@ export default function NowPlaying() {
                   </div>
                   <button 
                     onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }}
-                    className="text-xl md:text-2xl font-medium text-white/50 hover:text-white hover:underline transition-colors"
+                    className="text-lg sm:text-xl md:text-2xl font-medium text-white/50 hover:text-white hover:underline transition-colors"
                   >
                     {currentTrack.artist}
                   </button>
@@ -203,8 +203,8 @@ export default function NowPlaying() {
             </div>
 
             {/* Scrubber */}
-            <div className="mb-10 w-full">
-              <div className="flex items-center justify-between text-sm font-medium text-white/40 mb-4">
+            <div className="mb-8 md:mb-10 w-full shrink-0">
+              <div className="flex items-center justify-between text-xs md:text-sm font-medium text-white/40 mb-3 md:mb-4">
                 <span>{formatTime(progress)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
@@ -229,9 +229,9 @@ export default function NowPlaying() {
               
               <button 
                 onClick={togglePlay} 
-                className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)] shrink-0"
               >
-                {isPlaying ? <Pause fill="currentColor" className="w-10 h-10 md:w-12 md:h-12" /> : <Play fill="currentColor" className="w-10 h-10 md:w-12 md:h-12 ml-2" />}
+                {isPlaying ? <Pause fill="currentColor" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" /> : <Play fill="currentColor" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 ml-2" />}
               </button>
               
               <button onClick={playNext} className="text-white/50 hover:text-white transition-colors hover:scale-110">

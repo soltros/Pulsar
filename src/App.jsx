@@ -408,7 +408,7 @@ function GlobalContextMenu() {
 }
 
 function SettingsModal({ isOpen, onClose }) {
-  const { lastFmApiKey, setLastFmCredentials, autoFetchHomeArt, toggleAutoFetchHomeArt } = useSettingsStore();
+  const { autoFetchHomeArt, toggleAutoFetchHomeArt } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
   const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
@@ -419,36 +419,30 @@ function SettingsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSave = async () => {
-    setLastFmCredentials(apiKey, '');
-    try {
-      await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ VITE_LASTFM_API_KEY: apiKey })
-      });
-    } catch (e) {
-      console.error('Failed to save globally to .env', e);
+  const handleClearServerCache = async () => {
+    if (confirm('Are you sure you want to clear the server metadata cache for all users?')) {
+      try {
+        await fetch('/api/metadata/refresh', { method: 'POST' });
+        alert('Server cache cleared. Metadata will be re-fetched from Last.fm upon next scan.');
+      } catch (e) {
+        alert('Failed to clear server cache.');
+      }
     }
-    onClose();
   };
 
   const handleScan = async () => {
-    if (!lastFmApiKey) return;
     setIsScanning(true);
     await scanLastFmArt();
     setIsScanning(false);
   };
 
   const handleScanArtists = async () => {
-    if (!lastFmApiKey) return;
     setIsScanningArtists(true);
     await scanLastFmArtists();
     setIsScanningArtists(false);
   };
 
   const handleScanTracks = async () => {
-    if (!lastFmApiKey) return;
     setIsScanningTracks(true);
     await scanLastFmTracks();
     setIsScanningTracks(false);
@@ -529,21 +523,18 @@ function SettingsModal({ isOpen, onClose }) {
         <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
         
         <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-white/70 uppercase tracking-wider pl-1 mb-2 block">Last.fm API Key</label>
-            <input
-              type="text"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="Enter your Last.fm API Key"
-              className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-all"
-            />
-            <p className="text-xs text-white/40 mt-2 pl-1">Required to download high-res album art.</p>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-white">Server Metadata Integration</h4>
+            <p className="text-xs text-white/50 mb-4">
+              Pulsar now fetches enhanced metadata from its own backend server. The Last.fm API key is managed via Docker.
+            </p>
+            <button 
+              onClick={handleClearServerCache}
+              className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-2 rounded-xl transition-colors border border-white/10"
+            >
+              Clear Server Metadata Cache
+            </button>
           </div>
-          
-          <button onClick={handleSave} className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-xl transition-colors">
-            Save Settings
-          </button>
           
           <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
             <div>

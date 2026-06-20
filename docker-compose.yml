@@ -14,9 +14,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: pulsar_web
-    # Binds the static PWA web server directly to host port 8080
+    # Binds the server to host port 8080
     ports:
-      - "8080:80"
+      - "8080:8080"
     networks:
       - pulsar_net
+    volumes:
+      - pulsar_data:/app/data
+    environment:
+      - LASTFM_API_KEY=your_api_key_here
     restart: unless-stopped
+
+volumes:
+  pulsar_data:

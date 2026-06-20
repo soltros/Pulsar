@@ -11,16 +11,22 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production Delivery
-FROM nginx:alpine AS production
-# Copy compiled assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+FROM node:22-alpine AS production
+WORKDIR /app
 
-# Copy custom Nginx configuration (handles PWA routing and caching)
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy package files and install only production dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copy backend files
+COPY server/ ./server/
+
+# Copy compiled assets from builder
+COPY --from=builder /app/dist ./dist
 
 # Add healthcheck for Compose orchestration
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+CMD ["node", "server/index.js"]

@@ -224,7 +224,7 @@ export default function Home() {
   }, [playlists]);
 
   return (
-    <div className="px-6 pb-24">
+    <div className="p-4 md:p-8 pb-32 max-w-[1600px] mx-auto">
       <section className="mb-10 mt-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <h2 className="text-2xl font-bold text-white">Your Playlists</h2>

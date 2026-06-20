@@ -47,6 +47,14 @@ const configWriterPlugin = () => ({
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api/metadata': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      }
+    }
+  },
   plugins: [
     react(), 
     tailwindcss(), 

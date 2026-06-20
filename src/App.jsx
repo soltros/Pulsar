@@ -7,6 +7,8 @@ import { useLibraryStore } from './store/libraryStore';
 import { useSettingsStore } from './store/settingsStore';
 import { usePlayerStore } from './store/playerStore';
 import { getCoverArtUrl } from './lib/api';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from './lib/db';
 import Login from './components/Login';
 import Home from './pages/Home';
 import AlbumView from './pages/AlbumView';
@@ -120,6 +122,13 @@ function TopBar({ onOpenSettings, onOpenSidebar }) {
 function PlayerBar() {
   const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
+  const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
+  const [hasError, setHasError] = useState(false);
+
+  // Reset error state when track changes
+  useEffect(() => {
+    setHasError(false);
+  }, [currentTrack?.id]);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -135,17 +144,24 @@ function PlayerBar() {
     seek(percent * duration);
   };
 
+  const coverUrl = currentTrack?.lastFmArtUrl || dbAlbum?.lastFmArtUrl || (currentTrack ? getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200) : null);
+
   return (
     <div className="fixed bottom-[60px] md:bottom-0 left-0 right-0 h-20 bg-black/60 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-4 z-50">
       <div 
         className="flex items-center gap-4 w-1/4 min-w-[180px] cursor-pointer group"
         onClick={() => setIsNowPlayingOpen(true)}
       >
-        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5 flex items-center justify-center group-hover:shadow-primary/20 transition-all">
-          {currentTrack ? (
-            <img src={getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200)} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5 flex items-center justify-center group-hover:shadow-primary/20 transition-all border border-white/5">
+          {coverUrl && !hasError ? (
+            <img 
+              src={coverUrl} 
+              alt={currentTrack?.title || "Cover"} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+              onError={() => setHasError(true)}
+            />
           ) : (
-            <PulsarLogo className="w-6 h-6 text-white/20" />
+            <PulsarLogo className="w-8 h-8 text-white/20" />
           )}
         </div>
         <div className="flex-1 overflow-hidden">

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { getCoverArtUrl } from '../lib/api';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../lib/db';
 import PulsarLogo from './PulsarLogo';
 import LyricsView from './LyricsView';
 
@@ -24,7 +26,10 @@ export default function NowPlaying() {
     seek(percent * duration);
   };
 
-  const coverUrl = currentTrack ? getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 800) : null;
+  const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
+  const [hasError, setHasError] = useState(false);
+
+  const coverUrl = currentTrack?.lastFmArtUrl || dbAlbum?.lastFmArtUrl || (currentTrack ? getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 800) : null);
 
   return (
     <div className={`fixed inset-0 z-[100] bg-[#0d0e12] text-white transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isNowPlayingOpen ? 'translate-y-0' : 'translate-y-full'}`}>
@@ -62,8 +67,13 @@ export default function NowPlaying() {
           <div className={`w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 flex items-center justify-center transition-all duration-500 ${showLyrics ? '' : 'rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10'}`}>
             {showLyrics ? (
               <LyricsView track={currentTrack} progress={progress} />
-            ) : coverUrl ? (
-              <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+            ) : coverUrl && !hasError ? (
+              <img 
+                src={coverUrl} 
+                alt="Cover" 
+                className="w-full h-full object-cover" 
+                onError={() => setHasError(true)}
+              />
             ) : (
               <PulsarLogo className="w-32 h-32 text-primary opacity-50" />
             )}

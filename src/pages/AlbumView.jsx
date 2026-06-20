@@ -14,6 +14,7 @@ export default function AlbumView() {
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [hasImageError, setHasImageError] = useState(false);
   
   const { playTrack, queue, currentIndex, isPlaying, togglePlay } = usePlayerStore();
 
@@ -75,12 +76,17 @@ export default function AlbumView() {
     <div className="pb-32">
       {/* Header */}
       <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-        <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5">
-          <img 
-            src={album.lastFmArtUrl || getCoverArtUrl(album.coverArt || album.id, 400)} 
-            alt={album.name} 
-            className="w-full h-full object-cover" 
-          />
+        <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5 flex items-center justify-center">
+          {!hasImageError ? (
+            <img 
+              src={album.lastFmArtUrl || getCoverArtUrl(album.coverArt || album.id, 400)} 
+              alt={album.name} 
+              className="w-full h-full object-cover" 
+              onError={() => setHasImageError(true)}
+            />
+          ) : (
+            <PulsarLogo className="w-20 h-20 text-white/20" />
+          )}
         </div>
         <div className="flex-1 flex flex-col items-start gap-2">
           <span className="text-xs font-bold tracking-wider text-white/50 uppercase">Album</span>

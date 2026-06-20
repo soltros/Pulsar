@@ -7,10 +7,15 @@ export const useLibraryStore = create((set, get) => ({
   isSyncing: false,
   lastSync: 0,
   homeLists: {
+    favorites: [],
+    topRated: [],
     recentlyAdded: [],
     recentlyPlayed: [],
     mostPlayed: [],
-    random: []
+    random: [],
+    artists: [],
+    songs: [],
+    radios: []
   },
   
   syncLibrary: async () => {
@@ -18,21 +23,43 @@ export const useLibraryStore = create((set, get) => ({
     set({ isSyncing: true });
     
     try {
-      const [newestRes, recentRes, frequentRes, randomRes] = await Promise.allSettled([
+      const [
+        starredRes, highestRes, newestRes, recentRes, frequentRes, randomRes,
+        artistsRes, songsRes, radiosRes
+      ] = await Promise.allSettled([
+        fetchApi('getStarred2'),
+        fetchApi('getAlbumList2', { type: 'highest', size: 15 }),
         fetchApi('getAlbumList2', { type: 'newest', size: 15 }),
         fetchApi('getAlbumList2', { type: 'recent', size: 15 }),
         fetchApi('getAlbumList2', { type: 'frequent', size: 15 }),
-        fetchApi('getAlbumList2', { type: 'random', size: 15 })
+        fetchApi('getAlbumList2', { type: 'random', size: 15 }),
+        fetchApi('getArtists'),
+        fetchApi('getRandomSongs', { size: 15 }),
+        fetchApi('getInternetRadioStations')
       ]);
 
+      const favorites = starredRes.status === 'fulfilled' ? starredRes.value?.starred2?.album || [] : [];
+      const topRated = highestRes.status === 'fulfilled' ? highestRes.value?.albumList2?.album || [] : [];
       const recentlyAdded = newestRes.status === 'fulfilled' ? newestRes.value?.albumList2?.album || [] : [];
       const recentlyPlayed = recentRes.status === 'fulfilled' ? recentRes.value?.albumList2?.album || [] : [];
       const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
       const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
       
+      let artists = [];
+      if (artistsRes.status === 'fulfilled' && artistsRes.value?.artists?.index) {
+        artistsRes.value.artists.index.forEach(idx => {
+          if (idx.artist) artists.push(...idx.artist);
+        });
+        // Shuffle and pick 15
+        artists = artists.sort(() => 0.5 - Math.random()).slice(0, 15);
+      }
+
+      const songs = songsRes.status === 'fulfilled' ? songsRes.value?.randomSongs?.song || [] : [];
+      const radios = radiosRes.status === 'fulfilled' ? radiosRes.value?.internetRadioStations?.internetRadioStation || [] : [];
+      
       // Merge unique albums for IndexedDB local caching
       const albumMap = new Map();
-      [...recentlyAdded, ...recentlyPlayed, ...mostPlayed, ...random].forEach(album => {
+      [...favorites, ...topRated, ...recentlyAdded, ...recentlyPlayed, ...mostPlayed, ...random].forEach(album => {
         albumMap.set(album.id, album);
       });
       
@@ -53,7 +80,9 @@ export const useLibraryStore = create((set, get) => ({
       set({ 
         isSyncing: false, 
         lastSync: Date.now(),
-        homeLists: { recentlyAdded, recentlyPlayed, mostPlayed, random }
+        homeLists: { 
+          favorites, topRated, recentlyAdded, recentlyPlayed, mostPlayed, random, artists, songs, radios 
+        }
       });
     } catch (error) {
       console.error('Library Sync failed:', error);

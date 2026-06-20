@@ -94,8 +94,50 @@ function ConnectedAlbumCard({ album }) {
   );
 }
 
-function AlbumRow({ title, albums, isSyncing }) {
-  if (!albums || albums.length === 0) return null;
+function ArtistCard({ artist }) {
+  return (
+    <div className="group cursor-pointer w-full flex flex-col items-center">
+      <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500">
+        <div className="w-full h-full bg-white/10 flex items-center justify-center text-4xl font-bold text-white/20 uppercase">
+          {artist.name.charAt(0)}
+        </div>
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+      </div>
+      <h3 className="text-white font-semibold text-sm truncate w-full text-center" title={artist.name}>{artist.name}</h3>
+    </div>
+  );
+}
+
+function SongCard({ song }) {
+  return (
+    <div className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors">
+      <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
+        <img src={getCoverArtUrl(song.coverArt)} className="w-full h-full object-cover" alt="" />
+        <button className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <Play fill="currentColor" className="w-4 h-4 text-white ml-0.5" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <h3 className="text-white font-semibold text-sm truncate">{song.title}</h3>
+        <p className="text-white/50 text-xs truncate">{song.artist}</p>
+      </div>
+    </div>
+  );
+}
+
+function RadioCard({ radio }) {
+  return (
+    <div className="group cursor-pointer w-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 p-4 rounded-xl transition-colors border border-white/5">
+      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center mb-3">
+        <Mic2 className="text-white w-5 h-5" />
+      </div>
+      <h3 className="text-white font-semibold text-sm truncate">{radio.name}</h3>
+    </div>
+  );
+}
+
+function HorizontalRow({ title, items, renderItem, isSyncing }) {
+  if (!items || items.length === 0) return null;
 
   return (
     <section className="mb-10">
@@ -107,11 +149,25 @@ function AlbumRow({ title, albums, isSyncing }) {
         <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
       </div>
       <div className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-6 px-6">
-        {albums.map((album) => (
-          <div key={album.id} className="min-w-[140px] md:min-w-[160px] lg:min-w-[180px] snap-start shrink-0">
-            <ConnectedAlbumCard album={album} />
+        {items.map((item) => (
+          <div key={item.id} className="min-w-[140px] md:min-w-[160px] lg:min-w-[180px] snap-start shrink-0">
+            {renderItem(item)}
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function SongGridRow({ title, songs }) {
+  if (!songs || songs.length === 0) return null;
+  return (
+    <section className="mb-10">
+      <div className="flex items-end justify-between mb-4">
+        <h2 className="text-xl font-bold text-white">{title}</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {songs.map(song => <SongCard key={song.id} song={song} />)}
       </div>
     </section>
   );
@@ -155,11 +211,20 @@ function MainContent({ onOpenSettings }) {
           </div>
         </section>
 
-        {/* Album Rows */}
-        <AlbumRow title="Recently Added" albums={homeLists.recentlyAdded} isSyncing={isSyncing} />
-        <AlbumRow title="Recently Played" albums={homeLists.recentlyPlayed} />
-        <AlbumRow title="Most Played" albums={homeLists.mostPlayed} />
-        <AlbumRow title="Random Albums" albums={homeLists.random} />
+        {/* Categorized Rows */}
+        <HorizontalRow title="Favorites" items={homeLists.favorites} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+        <HorizontalRow title="Top Rated" items={homeLists.topRated} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+        <HorizontalRow title="Recently Added" items={homeLists.recentlyAdded} isSyncing={isSyncing} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+        <HorizontalRow title="Recently Played" items={homeLists.recentlyPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+        <HorizontalRow title="Most Played" items={homeLists.mostPlayed} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
+        
+        <HorizontalRow title="Artists" items={homeLists.artists} renderItem={(artist) => <ArtistCard artist={artist} />} />
+        
+        <SongGridRow title="Random Songs" songs={homeLists.songs} />
+        
+        <HorizontalRow title="Internet Radios" items={homeLists.radios} renderItem={(radio) => <RadioCard radio={radio} />} />
+        
+        <HorizontalRow title="Random Albums" items={homeLists.random} renderItem={(album) => <ConnectedAlbumCard album={album} />} />
         
         {(!homeLists.recentlyAdded || homeLists.recentlyAdded.length === 0) && !isSyncing && (
           <p className="text-white/40 text-sm">No albums found in your library. Is your Navidrome scanning?</p>

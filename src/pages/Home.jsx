@@ -1,5 +1,6 @@
-import { Play, Mic2, ListMusic } from 'lucide-react';
+import { Play, Pause, Mic2, ListMusic } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
+import { usePlayerStore } from '../store/playerStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { getCoverArtUrl } from '../lib/api';
@@ -67,12 +68,22 @@ function ArtistCard({ artist }) {
 }
 
 function SongCard({ song }) {
+  const { playTrack, currentIndex, queue, isPlaying, togglePlay } = usePlayerStore();
+  const isThisPlaying = queue[currentIndex]?.id === song.id;
+
   return (
-    <div className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors">
+    <div 
+      className="group cursor-pointer w-full flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors"
+      onClick={() => isThisPlaying ? togglePlay() : playTrack(song)}
+    >
       <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
-        <LazyImage src={getCoverArtUrl(song.coverArt)} className="w-full h-full" alt="" />
+        <LazyImage src={getCoverArtUrl(song.coverArt || song.albumId)} className="w-full h-full" alt="" />
         <button className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <Play fill="currentColor" className="w-4 h-4 text-white ml-0.5" />
+          {(isThisPlaying && isPlaying) ? (
+            <Pause fill="currentColor" className="w-4 h-4 text-white" />
+          ) : (
+            <Play fill="currentColor" className="w-4 h-4 text-white ml-0.5" />
+          )}
         </button>
       </div>
       <div className="flex-1 overflow-hidden">

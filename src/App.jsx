@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw } from 'lucide-react';
+import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
 import { useSettingsStore } from './store/settingsStore';
+import { usePlayerStore } from './store/playerStore';
+import { getCoverArtUrl } from './lib/api';
 import Login from './components/Login';
 import Home from './pages/Home';
 import AlbumView from './pages/AlbumView';
 import PlaylistView from './pages/PlaylistView';
+import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 
 function Sidebar() {
   return (
@@ -78,36 +81,59 @@ function TopBar({ onOpenSettings }) {
 }
 
 function PlayerBar() {
+  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek } = usePlayerStore();
+  const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleSeek = (e) => {
+    if (!duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    seek(percent * duration);
+  };
+
   return (
     <div className="fixed bottom-[60px] md:bottom-0 left-0 right-0 h-20 bg-black/60 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-4 z-50">
       <div className="flex items-center gap-4 w-1/4 min-w-[180px]">
-        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5">
+        <div className="relative w-14 h-14 rounded-md overflow-hidden shadow-lg bg-white/5 flex items-center justify-center">
+          {currentTrack ? (
+            <img src={getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200)} alt="Cover" className="w-full h-full object-cover" />
+          ) : (
+            <PulsarLogo className="w-6 h-6 text-white/20" />
+          )}
         </div>
         <div className="flex-1 overflow-hidden">
-          <h4 className="text-white font-medium text-sm truncate hover:underline cursor-pointer">Nothing Playing</h4>
+          <h4 className="text-white font-medium text-sm truncate hover:underline cursor-pointer">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h4>
+          <p className="text-white/50 text-xs truncate">{currentTrack ? currentTrack.artist : ''}</p>
         </div>
       </div>
 
       <div className="flex flex-col items-center flex-1 max-w-2xl px-4">
         <div className="flex items-center gap-6 mb-2">
-          <button className="text-white/50 hover:text-white transition-colors"><SkipBack className="w-5 h-5" /></button>
-          <button className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            <Play fill="currentColor" className="w-4 h-4 ml-0.5" />
+          <button onClick={playPrev} className="text-white/50 hover:text-white transition-colors"><SkipBack className="w-5 h-5" /></button>
+          <button onClick={togglePlay} className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            {isPlaying ? <Pause fill="currentColor" className="w-4 h-4" /> : <Play fill="currentColor" className="w-4 h-4 ml-0.5" />}
           </button>
-          <button className="text-white/50 hover:text-white transition-colors"><SkipForward className="w-5 h-5" /></button>
+          <button onClick={playNext} className="text-white/50 hover:text-white transition-colors"><SkipForward className="w-5 h-5" /></button>
         </div>
         <div className="flex items-center gap-2 w-full max-w-md text-xs text-white/50">
-          <span>0:00</span>
-          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden group cursor-pointer">
-            <div className="w-0 h-full bg-primary group-hover:bg-primary-light transition-colors relative"></div>
+          <span className="w-8 text-right">{formatTime(progress)}</span>
+          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden group cursor-pointer" onClick={handleSeek}>
+            <div className="h-full bg-primary group-hover:bg-orange-400 transition-colors relative" style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}></div>
           </div>
-          <span>0:00</span>
+          <span className="w-8 text-left">{formatTime(duration)}</span>
         </div>
       </div>
 
       <div className="w-1/4 flex justify-end items-center gap-4 hidden md:flex">
          <button className="text-white/50 hover:text-white transition-colors"><Mic2 className="w-4 h-4" /></button>
-         <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
+         <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer">
             <div className="w-2/3 h-full bg-white/80" />
          </div>
       </div>
@@ -229,6 +255,7 @@ function App() {
         </Routes>
       </main>
 
+      <GlobalAudioPlayer />
       <PlayerBar />
       <MobileNav />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

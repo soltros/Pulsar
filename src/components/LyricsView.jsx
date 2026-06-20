@@ -76,9 +76,13 @@ export default function LyricsView({ track, progress }) {
     });
 
     if (activeIndex !== -1) {
-      const lineElement = scrollRef.current.children[activeIndex];
-      if (lineElement) {
-        lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // The first child is the div with className="py-[50%]"
+      const container = scrollRef.current.children[0];
+      if (container) {
+        const lineElement = container.children[activeIndex];
+        if (lineElement) {
+          lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     }
   }, [progress, lyrics]);

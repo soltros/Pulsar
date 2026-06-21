@@ -99,33 +99,39 @@ export default function NowPlaying() {
           
           {/* LEFT SIDE (Always visible on Desktop, toggled on Mobile) */}
           <div className={`w-full lg:w-1/2 flex-col items-center lg:items-start justify-end lg:h-full lg:pb-12 ${nowPlayingTab === 'art' ? 'flex' : 'hidden lg:flex'}`}>
-            <div className="w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10 mb-8 mx-auto lg:mx-0">
+            <div className="relative w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10 mb-8 mx-auto lg:mx-0 group">
               {coverUrl && !hasError ? (
                 <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" onError={() => setHasError(true)} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><PulsarLogo className="w-32 h-32 text-primary opacity-50" /></div>
               )}
+              {currentTrack && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : !!currentTrack.starred, 'song');
+                  }}
+                  className="absolute bottom-4 right-4 md:bottom-6 md:right-6 p-3 md:p-4 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-black/60 hover:scale-105 transition-all z-10 shadow-xl opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                >
+                  <Heart className={`w-6 h-6 md:w-8 md:h-8 heart-bounce ${(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'heart-liked text-primary' : 'heart-unliked text-white'}`} fill={(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'currentColor' : 'none'} />
+                </button>
+              )}
             </div>
 
-            <div className="flex flex-col w-full max-w-md md:max-w-xl mx-auto lg:mx-0 shrink-0">
+            <div className="flex flex-col w-full max-w-md md:max-w-xl mx-auto lg:mx-0 shrink-0 px-4 lg:px-0">
               <div className="mb-8 text-center lg:text-left flex flex-col items-center lg:items-start">
                 {currentTrack ? (
                   <>
-                    <div className="flex items-center gap-4 mb-2">
-                      <a 
-                        href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30"
-                        title="View on Last.fm"
-                      >
-                        {currentTrack.title}
-                      </a>
-                      <button onClick={() => useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : !!currentTrack.starred, 'song')} className="p-2 rounded-full shrink-0">
-                        <Heart className={`w-6 h-6 md:w-8 md:h-8 heart-bounce ${(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'heart-liked text-primary' : 'heart-unliked text-white/50'}`} fill={(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
-                    <button onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }} className="text-lg md:text-xl font-medium text-white/50 hover:text-white hover:underline transition-colors">
+                    <a 
+                      href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30 mb-2 w-full"
+                      title="View on Last.fm"
+                    >
+                      {currentTrack.title}
+                    </a>
+                    <button onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }} className="text-lg md:text-xl font-medium text-white/50 hover:text-white hover:underline transition-colors w-full truncate">
                       {currentTrack.artist}
                     </button>
                   </>

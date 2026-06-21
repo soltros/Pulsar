@@ -9,8 +9,9 @@ import DOMPurify from 'dompurify';
 import PulsarLogo from '../components/PulsarLogo';
 import { Link } from 'react-router-dom';
 import { useLibraryStore } from '../store/libraryStore';
+import { useSettingsStore } from '../store/settingsStore';
 
-function AlbumTrackRow({ track, index, albumData }) {
+function AlbumTrackRow({ track, index, albumData, displayedTracks }) {
   const { playTrack, queue, currentIndex, isPlaying } = usePlayerStore();
   const dbSong = useLiveQuery(() => db.songs.get(track.id), [track.id]) || track;
   const toggleStar = useLibraryStore(state => state.toggleStar);
@@ -33,7 +34,7 @@ function AlbumTrackRow({ track, index, albumData }) {
 
   return (
     <div 
-      onClick={() => playTrack(dbSong, albumData.song, index)}
+      onClick={() => playTrack(dbSong, displayedTracks || albumData.song, index)}
       onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbSong, 'song')}
       className={`grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 rounded-lg cursor-pointer group transition-colors ${
         isTrackPlaying ? 'bg-white/10' : 'hover:bg-white/5'
@@ -79,6 +80,7 @@ export default function AlbumView() {
   const [hasImageError, setHasImageError] = useState(false);
   
   const { playTrack, queue, currentIndex, isPlaying, togglePlay } = usePlayerStore();
+  const hideDuplicateTracks = useSettingsStore(state => state.hideDuplicateTracks);
 
   useEffect(() => {
     async function loadAlbum() {
@@ -109,12 +111,27 @@ export default function AlbumView() {
 
   const isCurrentAlbumPlaying = queue.length > 0 && albumData?.song && queue[0].albumId === albumData.id;
 
+  let displayedTracks = [];
+  if (albumData?.song) {
+    if (!hideDuplicateTracks) {
+      displayedTracks = albumData.song;
+    } else {
+      const seenTitles = new Set();
+      displayedTracks = albumData.song.filter(track => {
+        const normalizedTitle = track.title?.trim().toLowerCase();
+        if (seenTitles.has(normalizedTitle)) return false;
+        seenTitles.add(normalizedTitle);
+        return true;
+      });
+    }
+  }
+
   const handlePlayAll = () => {
-    if (!albumData?.song?.length) return;
+    if (!displayedTracks?.length) return;
     if (isCurrentAlbumPlaying) {
       togglePlay();
     } else {
-      playTrack(albumData.song[0], albumData.song, 0);
+      playTrack(displayedTracks[0], displayedTracks, 0);
     }
   };
 
@@ -197,8 +214,8 @@ export default function AlbumView() {
         </div>
         
         <div className="flex flex-col">
-          {albumData?.song?.map((track, index) => (
-            <AlbumTrackRow key={track.id} track={track} index={index} albumData={albumData} />
+          {displayedTracks?.map((track, index) => (
+            <AlbumTrackRow key={track.id} track={track} index={index} albumData={albumData} displayedTracks={displayedTracks} />
           ))}
         </div>
       </div>

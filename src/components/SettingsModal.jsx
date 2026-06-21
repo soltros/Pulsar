@@ -5,7 +5,7 @@ import { useLibraryStore } from '../store/libraryStore';
 import { fetchApi } from '../lib/api';
 
 export default function SettingsModal({ isOpen, onClose }) {
-  const { autoFetchHomeArt, toggleAutoFetchHomeArt } = useSettingsStore();
+  const { autoFetchHomeArt, toggleAutoFetchHomeArt, hideDuplicateTracks, toggleHideDuplicateTracks } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
   const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
@@ -142,6 +142,19 @@ export default function SettingsModal({ isOpen, onClose }) {
               className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${autoFetchHomeArt ? 'bg-primary' : 'bg-white/20'}`}
             >
               <div className={`w-5 h-5 bg-white rounded-full transition-transform absolute ${autoFetchHomeArt ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+            <div>
+              <h4 className="text-sm font-semibold text-white">Hide Duplicate Tracks</h4>
+              <p className="text-xs text-white/50 mt-1 mr-2">Automatically hide duplicate track titles within albums.</p>
+            </div>
+            <button 
+              onClick={toggleHideDuplicateTracks}
+              className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${hideDuplicateTracks ? 'bg-primary' : 'bg-white/20'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full transition-transform absolute ${hideDuplicateTracks ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
 

@@ -8,8 +8,10 @@ export const useSettingsStore = create(
       lastFmApiSecret: import.meta.env.VITE_LASTFM_API_SECRET || '',
       pinnedPlaylists: [],
       autoFetchHomeArt: false,
+      hideDuplicateTracks: true,
       
       toggleAutoFetchHomeArt: () => set((state) => ({ autoFetchHomeArt: !state.autoFetchHomeArt })),
+      toggleHideDuplicateTracks: () => set((state) => ({ hideDuplicateTracks: !state.hideDuplicateTracks })),
       
       togglePinPlaylist: (playlist) => set((state) => {
         const isPinned = state.pinnedPlaylists.find(p => p.id === playlist.id);

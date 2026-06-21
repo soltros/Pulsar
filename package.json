@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "desktop": "concurrently \"npm run dev\" \"cd Desktop && tauri dev\"",
+    "desktop": "cd Desktop && tauri dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

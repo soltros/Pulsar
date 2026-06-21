@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../lib/db';
 import { fetchApi } from '../lib/api';
 import { usePlayerStore } from './playerStore';
+import { useSettingsStore } from './settingsStore';
 
 export const useLibraryStore = create((set, get) => ({
   isSyncing: false,
@@ -205,7 +206,29 @@ export const useLibraryStore = create((set, get) => ({
           const data = await res.json();
           if (data && Object.keys(data).length > 0) {
             const updatePayload = {};
-            if (data.lastFmArtUrl) updatePayload.lastFmArtUrl = data.lastFmArtUrl;
+            if (data.lastFmArtUrl) {
+              updatePayload.lastFmArtUrl = data.lastFmArtUrl;
+              
+              const { enableTagWriting, musicMountPath } = useSettingsStore.getState();
+              if (enableTagWriting && musicMountPath) {
+                // Fetch album details to get the relative path of the first song
+                const albumDetails = await fetchApi('getAlbum', { id: album.id }).catch(() => null);
+                const firstSongPath = albumDetails?.album?.song?.[0]?.path;
+                
+                if (firstSongPath) {
+                  fetch('/api/tags/inject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      filePath: firstSongPath,
+                      mountPath: musicMountPath,
+                      artUrl: data.lastFmArtUrl,
+                      enableWrite: enableTagWriting
+                    })
+                  }).catch(console.error);
+                }
+              }
+            }
             if (data.description) updatePayload.description = data.description;
             
             if (Object.keys(updatePayload).length > 0) {

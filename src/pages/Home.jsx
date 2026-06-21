@@ -216,11 +216,15 @@ export default function Home() {
   const homeLists = useLibraryStore((state) => state.homeLists);
   const isSyncing = useLibraryStore((state) => state.isSyncing);
   const autoFetchHomeArt = useSettingsStore(state => state.autoFetchHomeArt ?? true);
+  const [randomPlaylists, setRandomPlaylists] = useState([]);
   const [forceLoadArt, setForceLoadArt] = useState(false);
 
-  const randomPlaylists = useMemo(() => {
-    if (!playlists) return [];
-    return [...playlists].sort(() => 0.5 - Math.random()).slice(0, 6);
+  useEffect(() => {
+    if (playlists && playlists.length > 0) {
+      setRandomPlaylists([...playlists].sort(() => 0.5 - Math.random()).slice(0, 6));
+    } else {
+      setRandomPlaylists([]);
+    }
   }, [playlists]);
 
   return (

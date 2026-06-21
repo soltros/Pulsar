@@ -10,6 +10,7 @@ import PulsarLogo from '../components/PulsarLogo';
 import { Link } from 'react-router-dom';
 import { useLibraryStore } from '../store/libraryStore';
 import { useSettingsStore } from '../store/settingsStore';
+import PlaceholderArt from '../components/PlaceholderArt';
 
 function AlbumTrackRow({ track, index, albumData, displayedTracks }) {
   const { playTrack, queue, currentIndex, isPlaying } = usePlayerStore();
@@ -101,6 +102,7 @@ export default function AlbumView() {
   }, [id]);
 
   const album = dbAlbum || albumData;
+  const coverUrl = album?.lastFmArtUrl || getCoverArtUrl(album?.coverArt || album?.id, 400);
 
   const formatTime = (seconds) => {
     if (!seconds) return '0:00';
@@ -158,13 +160,13 @@ export default function AlbumView() {
         <div className="w-56 h-56 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5 flex items-center justify-center">
           {!hasImageError ? (
             <img 
-              src={album.lastFmArtUrl || getCoverArtUrl(album.coverArt || album.id, 400)} 
-              alt={album.name} 
-              className="w-full h-full object-cover" 
+              src={coverUrl} 
+              alt={album?.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
               onError={() => setHasImageError(true)}
             />
           ) : (
-            <PulsarLogo className="w-20 h-20 text-white/20" />
+            <PlaceholderArt iconClassName="w-20 h-20" />
           )}
         </div>
         <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-2 w-full">

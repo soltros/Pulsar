@@ -6,6 +6,7 @@ import { useLibraryStore } from '../store/libraryStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import PulsarLogo from './PulsarLogo';
+import PlaceholderArt from './PlaceholderArt';
 import LyricsView from './LyricsView';
 import { useNavigate } from 'react-router-dom';
 
@@ -103,7 +104,7 @@ export default function NowPlaying() {
               {coverUrl && !hasError ? (
                 <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" onError={() => setHasError(true)} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center"><PulsarLogo className="w-32 h-32 text-primary opacity-50" /></div>
+                <PlaceholderArt iconClassName="w-32 h-32" />
               )}
               {currentTrack && (
                 <button 

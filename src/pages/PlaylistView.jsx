@@ -4,12 +4,14 @@ import { fetchApi, getCoverArtUrl } from '../lib/api';
 import { usePlayerStore } from '../store/playerStore';
 import { Play, Clock, Hash, Pause } from 'lucide-react';
 import PulsarLogo from '../components/PulsarLogo';
+import PlaceholderArt from '../components/PlaceholderArt';
 
 export default function PlaylistView() {
   const { id } = useParams();
   const [playlist, setPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [hasImageError, setHasImageError] = useState(false);
   
   const { playTrack, queue, currentIndex, isPlaying, togglePlay } = usePlayerStore();
 
@@ -69,12 +71,17 @@ export default function PlaylistView() {
     <div className="pb-32">
       {/* Header */}
       <div className="relative p-6 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-        <div className="w-56 h-56 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5">
-          <img 
-            src={getCoverArtUrl(playlist.coverArt || playlist.id, 400)} 
-            alt={playlist.name} 
-            className="w-full h-full object-cover" 
-          />
+        <div className="w-56 h-56 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5 flex items-center justify-center">
+          {!hasImageError ? (
+            <img 
+              src={getCoverArtUrl(playlist.coverArt || playlist.id, 400)} 
+              alt={playlist.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+              onError={() => setHasImageError(true)}
+            />
+          ) : (
+            <PlaceholderArt iconClassName="w-20 h-20" />
+          )}
         </div>
         <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-2 w-full">
           <span className="text-xs font-bold tracking-wider text-white/50 uppercase">Playlist</span>

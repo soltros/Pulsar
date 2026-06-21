@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import { useState, useMemo, useEffect } from 'react';
 import PulsarLogo from '../components/PulsarLogo';
+import PlaceholderArt from '../components/PlaceholderArt';
 import { useSettingsStore } from '../store/settingsStore';
 
 export function LazyImage({ src, alt, className, forceLoadArt }) {
@@ -52,7 +53,9 @@ export function LazyImage({ src, alt, className, forceLoadArt }) {
           onError={handleError}
         />
       )}
-      {(hasError || !imgSrc) && (
+      {hasError || (!imgSrc && autoFetchHomeArt) ? (
+        <PlaceholderArt className="absolute inset-0" iconClassName="w-10 h-10" />
+      ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center opacity-80 z-0">
           <PulsarLogo className="w-1/3 h-1/3 text-primary" />
         </div>

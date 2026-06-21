@@ -6,6 +6,7 @@ import { getCoverArtUrl } from '../lib/api';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import PulsarLogo from './PulsarLogo';
+import PlaceholderArt from './PlaceholderArt';
 
 export default function PlayerBar() {
   const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen, setNowPlayingTab, isShuffle, repeatMode, toggleShuffle, toggleRepeat, volume, setVolume } = usePlayerStore();
@@ -50,7 +51,7 @@ export default function PlayerBar() {
               onError={() => setHasError(true)}
             />
           ) : (
-            <PulsarLogo className="w-6 h-6 md:w-8 md:h-8 text-white/20" />
+            <PlaceholderArt iconClassName="w-6 h-6 md:w-8 md:h-8" />
           )}
         </div>
         <div className="flex-1 min-w-0 overflow-hidden pr-2">

@@ -65,6 +65,9 @@ export default function GlobalAudioPlayer() {
             artwork: artworkArray
           });
 
+          // Also update document title, which iOS sometimes prefers for lockscreen
+          document.title = `${currentTrack.title} - ${currentTrack.artist}`;
+
           navigator.mediaSession.setActionHandler('play', () => usePlayerStore.getState().togglePlay());
           navigator.mediaSession.setActionHandler('pause', () => usePlayerStore.getState().togglePlay());
           navigator.mediaSession.setActionHandler('previoustrack', () => usePlayerStore.getState().playPrev());
@@ -100,6 +103,13 @@ export default function GlobalAudioPlayer() {
         }
       } else {
         navigator.mediaSession.metadata = null;
+        document.title = 'Pulsar';
+      }
+    } else {
+      if (currentTrack) {
+        document.title = `${currentTrack.title} - ${currentTrack.artist}`;
+      } else {
+        document.title = 'Pulsar';
       }
     }
   }, [currentTrack]);

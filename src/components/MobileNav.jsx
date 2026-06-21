@@ -16,7 +16,7 @@ function NavItemMobile({ icon, label, to, end }) {
 
 export default function MobileNav() {
   return (
-    <nav className="md:hidden fixed bottom-4 left-4 right-4 h-[60px] bg-[#16171d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center justify-around z-50 shadow-2xl px-2">
+    <nav className="md:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 h-[60px] bg-[#16171d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center justify-around z-50 shadow-2xl px-2">
       <NavItemMobile to="/" icon={<HomeIcon />} label="Home" end />
       <NavItemMobile to="/explore" icon={<Search />} label="Explore" />
       <NavItemMobile to="/library" icon={<Library />} label="Library" />

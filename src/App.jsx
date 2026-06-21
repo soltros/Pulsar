@@ -58,7 +58,7 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
       
-      <main className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth md:pb-36 pb-44">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth md:pb-36 pb-[calc(11rem+env(safe-area-inset-bottom))]">
         {/* Background ambient glow */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] -z-10 pointer-events-none" />
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[128px] -z-10 pointer-events-none" />

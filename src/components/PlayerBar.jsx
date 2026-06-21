@@ -37,7 +37,7 @@ export default function PlayerBar() {
   const coverUrl = currentTrack?.lastFmArtUrl || dbAlbum?.lastFmArtUrl || (currentTrack ? getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 200) : null);
 
   return (
-    <div className="fixed bottom-[85px] md:bottom-8 left-4 right-4 md:left-[320px] md:right-8 h-20 bg-[#16171d]/90 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center justify-between px-3 md:px-6 z-50 shadow-2xl shadow-primary/10">
+    <div className="fixed bottom-[calc(85px+env(safe-area-inset-bottom))] md:bottom-8 left-4 right-4 md:left-[320px] md:right-8 h-20 bg-[#16171d]/90 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center justify-between px-3 md:px-6 z-50 shadow-2xl shadow-primary/10">
       <div 
         className="flex items-center gap-3 md:gap-4 w-auto md:w-1/3 min-w-0 cursor-pointer group"
         onClick={() => setIsNowPlayingOpen(true)}

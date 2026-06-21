@@ -3,7 +3,7 @@ import PulsarLogo from './PulsarLogo';
 
 export default function TopBar({ onOpenSettings, onOpenSidebar }) {
   return (
-    <header className="sticky top-0 md:top-6 z-20 flex items-center justify-between px-4 py-3 md:px-6 md:mx-6 md:mt-6 bg-[#16171d]/90 backdrop-blur-3xl border-b md:border border-white/5 md:rounded-2xl shadow-xl transition-all overflow-hidden">
+    <header className="sticky top-0 md:top-6 z-20 flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:px-6 md:mx-6 md:mt-6 bg-[#16171d]/90 backdrop-blur-3xl border-b md:border border-white/5 md:rounded-2xl shadow-xl transition-all overflow-hidden">
       <div className="flex items-center flex-1 max-w-2xl gap-4">
         <button onClick={onOpenSidebar} className="md:hidden w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0">
           <Menu className="w-5 h-5 text-white" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '../store/playerStore';
-import { getApiUrl, getCoverArtUrl } from '../lib/api';
+import { getApiUrl, getCoverArtUrl, fetchApi } from '../lib/api';
 
 export default function GlobalAudioPlayer() {
   const audioRef = useRef(null);
@@ -13,12 +13,15 @@ export default function GlobalAudioPlayer() {
   const playNext = usePlayerStore(state => state.playNext);
   
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
+  const volume = usePlayerStore(state => state.volume);
+  const scrobbledTrackIds = useRef(new Set());
 
   useEffect(() => {
     if (audioRef.current) {
       setAudioRef(audioRef);
+      audioRef.current.volume = volume;
     }
-  }, [setAudioRef]);
+  }, [setAudioRef, volume]);
 
   // Handle Play/Pause changes
   useEffect(() => {
@@ -65,7 +68,18 @@ export default function GlobalAudioPlayer() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setProgress(audioRef.current.currentTime);
+      const curTime = audioRef.current.currentTime;
+      const dur = audioRef.current.duration;
+      setProgress(curTime);
+
+      // Scrobble at 50% or 4 minutes, whichever is smaller
+      if (currentTrack && dur > 0 && !scrobbledTrackIds.current.has(currentTrack.id)) {
+        const scrobblePoint = Math.min(dur / 2, 240);
+        if (curTime >= scrobblePoint) {
+          scrobbledTrackIds.current.add(currentTrack.id);
+          fetchApi('scrobble', { id: currentTrack.id, submission: true }).catch(console.error);
+        }
+      }
     }
   };
 
@@ -76,6 +90,10 @@ export default function GlobalAudioPlayer() {
   };
 
   const handleEnded = () => {
+    if (currentTrack && !scrobbledTrackIds.current.has(currentTrack.id)) {
+      scrobbledTrackIds.current.add(currentTrack.id);
+      fetchApi('scrobble', { id: currentTrack.id, submission: true }).catch(console.error);
+    }
     playNext();
   };
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2, ListMusic, Clock, Image as ImageIcon, Heart, Save } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipBack, SkipForward, Mic2, ListMusic, Clock, Image as ImageIcon, Heart, Save, Shuffle, Repeat, Repeat1 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { getCoverArtUrl, fetchApi } from '../lib/api';
 import { useLibraryStore } from '../store/libraryStore';
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function NowPlaying() {
   const navigate = useNavigate();
-  const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek, nowPlayingTab, setNowPlayingTab, playTrack } = usePlayerStore();
+  const { isNowPlayingOpen, setIsNowPlayingOpen, queue, currentIndex, isPlaying, togglePlay, playNext, playPrev, progress, duration, seek, nowPlayingTab, setNowPlayingTab, playTrack, isShuffle, repeatMode, toggleShuffle, toggleRepeat } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
 
   const formatTime = (seconds) => {
@@ -222,7 +222,11 @@ export default function NowPlaying() {
             </div>
 
             {/* Controls */}
-            <div className={`flex items-center justify-center ${nowPlayingTab === 'art' ? 'lg:justify-start' : ''} gap-8`}>
+            <div className={`flex items-center justify-center ${nowPlayingTab === 'art' ? 'lg:justify-start' : ''} gap-6 md:gap-8`}>
+              <button onClick={toggleShuffle} className={`transition-colors hover:scale-110 ${isShuffle ? 'text-primary' : 'text-white/30 hover:text-white'}`}>
+                <Shuffle className="w-6 h-6 md:w-8 md:h-8" />
+              </button>
+              
               <button onClick={playPrev} className="text-white/50 hover:text-white transition-colors hover:scale-110">
                 <SkipBack className="w-8 h-8 md:w-10 md:h-10 fill-current" />
               </button>
@@ -236,6 +240,10 @@ export default function NowPlaying() {
               
               <button onClick={playNext} className="text-white/50 hover:text-white transition-colors hover:scale-110">
                 <SkipForward className="w-8 h-8 md:w-10 md:h-10 fill-current" />
+              </button>
+
+              <button onClick={toggleRepeat} className={`transition-colors hover:scale-110 ${repeatMode !== 'none' ? 'text-primary' : 'text-white/30 hover:text-white'}`}>
+                {repeatMode === 'one' ? <Repeat1 className="w-6 h-6 md:w-8 md:h-8" /> : <Repeat className="w-6 h-6 md:w-8 md:h-8" />}
               </button>
             </div>
           </div>

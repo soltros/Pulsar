@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu, Trash2, Heart } from 'lucide-react';
+import { Home as HomeIcon, Search, Library, Play, Pause, SkipForward, SkipBack, ListMusic, Settings, Mic2, X, RefreshCw, Menu, Trash2, Heart, Shuffle, Repeat, Repeat1, Volume2, VolumeX } from 'lucide-react';
 import PulsarLogo from './components/PulsarLogo';
 import { useAuthStore } from './store/authStore';
 import { useLibraryStore } from './store/libraryStore';
@@ -128,7 +128,7 @@ function TopBar({ onOpenSettings, onOpenSidebar }) {
 }
 
 function PlayerBar() {
-  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen, setNowPlayingTab } = usePlayerStore();
+  const { queue, currentIndex, isPlaying, progress, duration, togglePlay, playNext, playPrev, seek, setIsNowPlayingOpen, setNowPlayingTab, isShuffle, repeatMode, toggleShuffle, toggleRepeat, volume, setVolume } = usePlayerStore();
   const currentTrack = currentIndex >= 0 ? queue[currentIndex] : null;
   const dbAlbum = useLiveQuery(() => currentTrack ? db.albums.get(currentTrack.albumId) : null, [currentTrack?.albumId]);
   const dbSong = useLiveQuery(() => currentTrack ? db.songs.get(currentTrack.id) : null, [currentTrack?.id]);
@@ -192,11 +192,17 @@ function PlayerBar() {
 
       <div className="flex flex-col items-center flex-1 max-w-md px-2 md:px-4 hidden sm:flex">
         <div className="flex items-center gap-4 md:gap-6 mb-2">
-          <button onClick={playPrev} className="text-white/50 hover:text-white transition-colors"><SkipBack className="w-4 h-4 md:w-5 md:h-5" /></button>
-          <button onClick={togglePlay} className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+          <button onClick={toggleShuffle} className={`transition-colors hover:scale-110 ${isShuffle ? 'text-primary' : 'text-white/30 hover:text-white'}`}>
+            <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+          <button onClick={playPrev} className="text-white/50 hover:text-white transition-colors hover:scale-110"><SkipBack className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" /></button>
+          <button onClick={togglePlay} className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)] shrink-0">
             {isPlaying ? <Pause fill="currentColor" className="w-5 h-5" /> : <Play fill="currentColor" className="w-5 h-5 ml-0.5" />}
           </button>
-          <button onClick={playNext} className="text-white/50 hover:text-white transition-colors"><SkipForward className="w-4 h-4 md:w-5 md:h-5" /></button>
+          <button onClick={playNext} className="text-white/50 hover:text-white transition-colors hover:scale-110"><SkipForward className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" /></button>
+          <button onClick={toggleRepeat} className={`transition-colors hover:scale-110 ${repeatMode !== 'none' ? 'text-primary' : 'text-white/30 hover:text-white'}`}>
+            {repeatMode === 'one' ? <Repeat1 className="w-4 h-4 md:w-5 md:h-5" /> : <Repeat className="w-4 h-4 md:w-5 md:h-5" />}
+          </button>
         </div>
         <div className="flex items-center gap-3 w-full text-[10px] md:text-xs text-white/50 font-medium">
           <span className="w-8 text-right">{formatTime(progress)}</span>
@@ -229,8 +235,20 @@ function PlayerBar() {
          >
            <Mic2 className="w-4 h-4" />
          </button>
-         <div className="w-24 h-1.5 bg-black/50 rounded-full overflow-hidden cursor-pointer ml-2 border border-white/5">
-            <div className="w-2/3 h-full bg-white/80 rounded-full" />
+         <div className="flex items-center gap-2 ml-2 w-28 group">
+           <button onClick={() => setVolume(volume === 0 ? 1 : 0)} className="text-white/50 hover:text-white transition-colors">
+             {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+           </button>
+           <div 
+             className="flex-1 h-1.5 bg-black/50 rounded-full overflow-hidden cursor-pointer border border-white/5 relative"
+             onClick={(e) => {
+               const rect = e.currentTarget.getBoundingClientRect();
+               const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+               setVolume(percent);
+             }}
+           >
+              <div className="h-full bg-white/80 group-hover:bg-primary rounded-full transition-colors" style={{ width: `${volume * 100}%` }} />
+           </div>
          </div>
       </div>
     </div>
@@ -345,6 +363,27 @@ function GlobalContextMenu() {
     }
   };
 
+  const handleStartRadio = async (e) => {
+    e.stopPropagation();
+    try {
+      if (contextMenu.type === 'song') {
+        const res = await fetchApi('getSimilarSongs2', { id: contextMenu.target.id, count: 50 });
+        if (res.similarSongs2?.song) {
+          const radioQueue = [contextMenu.target, ...res.similarSongs2.song];
+          usePlayerStore.getState().playTrack(radioQueue[0], radioQueue, 0);
+        } else {
+          alert('No similar songs found for radio.');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to start radio.');
+    } finally {
+      closeContextMenu();
+      setShowPlaylists(false);
+    }
+  };
+
   // Prevent menu from overflowing screen
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
@@ -386,6 +425,14 @@ function GlobalContextMenu() {
             <span>Add to Playlist</span>
             <span className="text-white/30 group-hover:text-white">&rarr;</span>
           </button>
+          {contextMenu.type === 'song' && (
+            <button 
+              className="w-full text-left px-4 py-2.5 text-sm text-orange-400 hover:bg-orange-400/10 transition-colors border-t border-white/5 mt-1"
+              onClick={handleStartRadio}
+            >
+              Start Track Radio
+            </button>
+          )}
         </>
       ) : (
         <div className="max-h-64 overflow-y-auto hide-scrollbar">

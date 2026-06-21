@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export const usePlayerStore = create((set, get) => ({
   queue: [],
+  originalQueue: [], // to restore order when shuffle is toggled off
   currentIndex: -1,
   isPlaying: false,
   volume: 1,
@@ -10,6 +11,8 @@ export const usePlayerStore = create((set, get) => ({
   audioRef: null,
   isNowPlayingOpen: false,
   nowPlayingTab: 'art',
+  isShuffle: false,
+  repeatMode: 'none', // 'none', 'all', 'one'
 
   setAudioRef: (ref) => set({ audioRef: ref }),
   setIsNowPlayingOpen: (open) => set({ isNowPlayingOpen: open }),
@@ -17,48 +20,81 @@ export const usePlayerStore = create((set, get) => ({
 
   playTrack: (track, newQueue = null, index = 0) => {
     const queue = newQueue || [track];
-    set({ queue, currentIndex: index, isPlaying: true, progress: 0 });
+    const { isShuffle } = get();
+    
+    let activeQueue = [...queue];
+    let activeIndex = index;
+    
+    if (isShuffle) {
+      // Keep current track at index 0, shuffle the rest
+      const remaining = activeQueue.filter((_, i) => i !== index);
+      for (let i = remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+      }
+      activeQueue = [activeQueue[index], ...remaining];
+      activeIndex = 0;
+    }
+    
+    set({ queue: activeQueue, originalQueue: queue, currentIndex: activeIndex, isPlaying: true, progress: 0 });
   },
 
-  setQueue: (queue) => set({ queue }),
+  setQueue: (queue) => set({ queue, originalQueue: queue }),
 
   addToQueueNext: (tracks) => {
-    const { queue, currentIndex } = get();
+    const { queue, originalQueue, currentIndex } = get();
     const newQueue = [...queue];
+    const newOrigQueue = [...originalQueue];
     const insertIdx = currentIndex >= 0 ? currentIndex + 1 : 0;
     newQueue.splice(insertIdx, 0, ...tracks);
-    set({ queue: newQueue });
+    newOrigQueue.splice(insertIdx, 0, ...tracks);
+    set({ queue: newQueue, originalQueue: newOrigQueue });
     if (currentIndex === -1) {
       set({ currentIndex: 0, isPlaying: true });
     }
   },
 
   addToQueueLast: (tracks) => {
-    const { queue, currentIndex } = get();
-    set({ queue: [...queue, ...tracks] });
+    const { queue, originalQueue, currentIndex } = get();
+    set({ queue: [...queue, ...tracks], originalQueue: [...originalQueue, ...tracks] });
     if (currentIndex === -1) {
       set({ currentIndex: 0, isPlaying: true });
     }
   },
 
   playNext: () => {
-    const { queue, currentIndex } = get();
+    const { queue, currentIndex, repeatMode } = get();
+    if (repeatMode === 'one') {
+      const { audioRef } = get();
+      if (audioRef?.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+      }
+      set({ progress: 0 });
+      return;
+    }
+
     if (currentIndex < queue.length - 1) {
       set({ currentIndex: currentIndex + 1, isPlaying: true, progress: 0 });
     } else {
-      set({ isPlaying: false });
+      if (repeatMode === 'all') {
+        set({ currentIndex: 0, isPlaying: true, progress: 0 });
+      } else {
+        set({ isPlaying: false });
+      }
     }
   },
 
   playPrev: () => {
-    const { currentIndex, progress } = get();
-    // If we are more than 3 seconds in, restart track. Otherwise go to prev.
+    const { currentIndex, progress, queue, repeatMode } = get();
     if (progress > 3) {
       set({ progress: 0 });
       const { audioRef } = get();
       if (audioRef?.current) audioRef.current.currentTime = 0;
     } else if (currentIndex > 0) {
       set({ currentIndex: currentIndex - 1, isPlaying: true, progress: 0 });
+    } else if (repeatMode === 'all') {
+      set({ currentIndex: queue.length - 1, isPlaying: true, progress: 0 });
     }
   },
 
@@ -92,5 +128,30 @@ export const usePlayerStore = create((set, get) => ({
       audioRef.current.currentTime = time;
       set({ progress: time });
     }
+  },
+
+  toggleShuffle: () => {
+    const { isShuffle, queue, originalQueue, currentIndex } = get();
+    if (isShuffle) {
+      // Turn off shuffle
+      const currentTrack = queue[currentIndex];
+      const origIndex = originalQueue.findIndex(t => t.id === currentTrack?.id) || 0;
+      set({ isShuffle: false, queue: [...originalQueue], currentIndex: origIndex });
+    } else {
+      // Turn on shuffle
+      const currentTrack = queue[currentIndex];
+      const remaining = queue.filter((_, i) => i !== currentIndex);
+      for (let i = remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+      }
+      set({ isShuffle: true, queue: [currentTrack, ...remaining], currentIndex: 0 });
+    }
+  },
+
+  toggleRepeat: () => {
+    const { repeatMode } = get();
+    const nextMode = repeatMode === 'none' ? 'all' : repeatMode === 'all' ? 'one' : 'none';
+    set({ repeatMode: nextMode });
   }
 }));

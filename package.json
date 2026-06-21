@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "desktop": "cd Desktop && tauri dev",
+    "desktop:build": "cd Desktop && tauri build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

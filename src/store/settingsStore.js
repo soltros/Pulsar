@@ -7,7 +7,7 @@ export const useSettingsStore = create(
       lastFmApiKey: import.meta.env.VITE_LASTFM_API_KEY || '',
       lastFmApiSecret: import.meta.env.VITE_LASTFM_API_SECRET || '',
       pinnedPlaylists: [],
-      autoFetchHomeArt: true,
+      autoFetchHomeArt: false,
       
       toggleAutoFetchHomeArt: () => set((state) => ({ autoFetchHomeArt: !state.autoFetchHomeArt })),
       

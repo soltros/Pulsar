@@ -186,9 +186,9 @@ export function HorizontalRow({ title, items, renderItem, isSyncing }) {
         </div>
         <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
       </div>
-      <div className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-6 px-6">
+      <div className="flex overflow-x-auto gap-4 md:gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 md:-mx-8 md:px-8">
         {items.map((item) => (
-          <div key={item.id} className="w-[140px] md:w-[160px] lg:w-[180px] shrink-0 snap-start flex-none">
+          <div key={item.id} className="w-[130px] md:w-[160px] lg:w-[180px] shrink-0 snap-start flex-none">
             {renderItem(item)}
           </div>
         ))}

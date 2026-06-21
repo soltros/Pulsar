@@ -154,8 +154,8 @@ export default function AlbumView() {
   return (
     <div className="pb-32">
       {/* Header */}
-      <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-        <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5 flex items-center justify-center">
+      <div className="relative p-6 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
+        <div className="w-56 h-56 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5 flex items-center justify-center">
           {!hasImageError ? (
             <img 
               src={album.lastFmArtUrl || getCoverArtUrl(album.coverArt || album.id, 400)} 
@@ -167,10 +167,10 @@ export default function AlbumView() {
             <PulsarLogo className="w-20 h-20 text-white/20" />
           )}
         </div>
-        <div className="flex-1 flex flex-col items-start gap-2">
+        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-2 w-full">
           <span className="text-xs font-bold tracking-wider text-white/50 uppercase">Album</span>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">{album.name}</h1>
-          <div className="flex items-center gap-2 mt-2">
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{album.name}</h1>
+          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 flex-wrap">
             <Link to={`/artist/${album.artistId || albumData?.artistId}`} className="font-semibold text-white hover:underline">{album.artist}</Link>
             <span className="text-white/30">•</span>
             <span className="text-white/70">{album.year || 'Unknown Year'}</span>
@@ -178,7 +178,7 @@ export default function AlbumView() {
             <span className="text-white/70">{album.songCount} tracks</span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center md:justify-start gap-3 w-full mt-2">
             <button 
               onClick={handlePlayAll}
               className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"

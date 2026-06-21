@@ -68,18 +68,18 @@ export default function PlaylistView() {
   return (
     <div className="pb-32">
       {/* Header */}
-      <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-        <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5">
+      <div className="relative p-6 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
+        <div className="w-56 h-56 md:w-56 md:h-56 shrink-0 rounded-xl overflow-hidden shadow-2xl relative bg-white/5">
           <img 
             src={getCoverArtUrl(playlist.coverArt || playlist.id, 400)} 
             alt={playlist.name} 
             className="w-full h-full object-cover" 
           />
         </div>
-        <div className="flex-1 flex flex-col items-start gap-2">
+        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-2 w-full">
           <span className="text-xs font-bold tracking-wider text-white/50 uppercase">Playlist</span>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">{playlist.name}</h1>
-          <div className="flex items-center gap-2 mt-2">
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{playlist.name}</h1>
+          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 flex-wrap">
             <span className="font-semibold text-white">Playlist</span>
             <span className="text-white/30">•</span>
             <span className="text-white/70">{playlist.songCount} tracks</span>
@@ -87,12 +87,14 @@ export default function PlaylistView() {
             <span className="text-white/70">{Math.floor(playlist.duration / 60)} mins</span>
           </div>
           
-          <button 
-            onClick={handlePlayAll}
-            className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
-          >
-            {(isCurrentPlaylistPlaying && isPlaying) ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
-          </button>
+          <div className="flex items-center justify-center md:justify-start gap-3 w-full mt-2">
+            <button 
+              onClick={handlePlayAll}
+              className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
+            >
+              {(isCurrentPlaylistPlaying && isPlaying) ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
+            </button>
+          </div>
         </div>
       </div>
 

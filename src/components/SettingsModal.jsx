@@ -170,8 +170,8 @@ export default function SettingsModal({ isOpen, onClose }) {
           <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-semibold text-white">Filesystem Tag Writing (Admin)</h4>
-                <p className="text-xs text-white/50 mt-1 mr-2">Permanently write tags to physical files via Node Backend.</p>
+                <h4 className="text-sm font-semibold text-white">Save Cover Art to Album Folders (Admin)</h4>
+                <p className="text-xs text-white/50 mt-1 mr-2">Download Last.fm art as cover.jpg/folder.jpg sidecar files.</p>
               </div>
               <button 
                 onClick={toggleEnableTagWriting}

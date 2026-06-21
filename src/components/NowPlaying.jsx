@@ -99,8 +99,8 @@ export default function NowPlaying() {
         <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-end justify-center gap-8 lg:gap-16 mt-6 md:mt-0 w-full max-w-full pb-10 overflow-hidden">
           
           {/* LEFT SIDE (Always visible on Desktop, toggled on Mobile) */}
-          <div className={`w-full lg:w-1/2 flex-col items-center lg:items-start justify-end lg:h-full lg:pb-12 ${nowPlayingTab === 'art' ? 'flex' : 'hidden lg:flex'}`}>
-            <div className="relative w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10 mb-8 mx-auto lg:mx-0 group">
+          <div className={`w-full lg:w-1/2 flex-col items-center justify-end lg:h-full lg:pb-12 ${nowPlayingTab === 'art' ? 'flex' : 'hidden lg:flex'}`}>
+            <div className="relative w-full max-w-[320px] md:max-w-[460px] aspect-square shrink-0 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-white/10 mb-8 mx-auto group">
               {coverUrl && !hasError ? (
                 <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" onError={() => setHasError(true)} />
               ) : (
@@ -119,20 +119,20 @@ export default function NowPlaying() {
               )}
             </div>
 
-            <div className="flex flex-col w-full max-w-md md:max-w-xl mx-auto lg:mx-0 shrink-0 px-4 lg:px-0">
-              <div className="mb-8 text-center lg:text-left flex flex-col items-center lg:items-start">
+            <div className="flex flex-col w-full max-w-md md:max-w-[460px] mx-auto shrink-0 px-4 lg:px-0">
+              <div className="mb-8 text-center flex flex-col items-center w-full">
                 {currentTrack ? (
                   <>
                     <a 
                       href={`https://www.last.fm/music/${encodeURIComponent(currentTrack.artist)}/_/${encodeURIComponent(currentTrack.title)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30 mb-2 w-full"
+                      className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight line-clamp-2 hover:underline decoration-white/30 mb-2 w-full text-center"
                       title="View on Last.fm"
                     >
                       {currentTrack.title}
                     </a>
-                    <button onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }} className="text-lg md:text-xl font-medium text-white/50 hover:text-white hover:underline transition-colors w-full truncate">
+                    <button onClick={() => { setIsNowPlayingOpen(false); navigate(`/artist/${currentTrack.artistId}`); }} className="text-lg md:text-xl font-medium text-white/50 hover:text-white hover:underline transition-colors w-full truncate text-center">
                       {currentTrack.artist}
                     </button>
                   </>
@@ -164,7 +164,7 @@ export default function NowPlaying() {
               </div>
 
               {/* Controls */}
-              <div className="flex items-center justify-center lg:justify-start gap-6 md:gap-8">
+              <div className="flex items-center justify-center gap-6 md:gap-8">
                 <button onClick={toggleShuffle} className={`transition-colors hover:scale-110 ${isShuffle ? 'text-primary' : 'text-white/30 hover:text-white'}`}>
                   <Shuffle className="w-5 h-5 md:w-6 md:h-6" />
                 </button>

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '../lib/db';
 import { fetchApi } from '../lib/api';
+import { usePlayerStore } from './playerStore';
 
 export const useLibraryStore = create((set, get) => ({
   isSyncing: false,
@@ -162,6 +163,7 @@ export const useLibraryStore = create((set, get) => ({
       if (type === 'song') {
         const item = await db.songs.get(id);
         if (item) await db.songs.update(id, { starred: !isStarred ? new Date().toISOString() : undefined });
+        usePlayerStore.getState().updateTrackInQueue(id, { starred: !isStarred ? new Date().toISOString() : undefined });
       } else if (type === 'album') {
         const item = await db.albums.get(id);
         if (item) await db.albums.update(id, { starred: !isStarred ? new Date().toISOString() : undefined });

@@ -54,7 +54,7 @@ export default function PlayerBar() {
             <PlaceholderArt iconClassName="w-6 h-6 md:w-8 md:h-8" />
           )}
         </div>
-        <div className="flex-1 min-w-0 overflow-hidden pr-2">
+        <div className="flex flex-col justify-center min-w-0 shrink pr-2 md:pr-4">
           <h4 className="text-white font-bold text-sm truncate group-hover:text-primary transition-colors">{currentTrack ? currentTrack.title : 'Nothing Playing'}</h4>
           <p className="text-white/50 text-xs truncate font-medium">{currentTrack ? currentTrack.artist : 'Pulsar'}</p>
         </div>
@@ -64,11 +64,12 @@ export default function PlayerBar() {
               e.stopPropagation();
               useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : (currentTrack.starred ?? false), 'song');
             }}
-            className="p-2 rounded-full shrink-0"
+            className="p-2 rounded-full shrink-0 -ml-2 hover:bg-white/5 transition-colors"
           >
             <Heart className={`w-5 h-5 heart-bounce ${(dbSong ? !!dbSong.starred : (currentTrack.starred ?? false)) ? 'heart-liked text-primary' : 'heart-unliked text-white/50'}`} fill={(dbSong ? !!dbSong.starred : (currentTrack.starred ?? false)) ? 'currentColor' : 'none'} />
           </button>
         )}
+        <div className="flex-1 hidden md:block" />
       </div>
 
       <div className="flex flex-col items-center flex-1 max-w-md px-2 md:px-4 hidden sm:flex">

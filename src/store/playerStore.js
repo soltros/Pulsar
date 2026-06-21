@@ -41,6 +41,11 @@ export const usePlayerStore = create((set, get) => ({
 
   setQueue: (queue) => set({ queue, originalQueue: queue }),
 
+  updateTrackInQueue: (trackId, updates) => set(state => ({
+    queue: state.queue.map(t => t.id === trackId ? { ...t, ...updates } : t),
+    originalQueue: state.originalQueue.map(t => t.id === trackId ? { ...t, ...updates } : t)
+  })),
+
   addToQueueNext: (tracks) => {
     const { queue, originalQueue, currentIndex } = get();
     const newQueue = [...queue];

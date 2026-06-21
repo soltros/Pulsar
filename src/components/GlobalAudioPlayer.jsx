@@ -47,19 +47,50 @@ export default function GlobalAudioPlayer() {
   useEffect(() => {
     if ('mediaSession' in navigator) {
       if (currentTrack) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: currentTrack.title,
-          artist: currentTrack.artist,
-          album: currentTrack.album || '',
-          artwork: [
-            { src: currentTrack.lastFmArtUrl || getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 500), sizes: '500x500', type: 'image/jpeg' }
-          ]
-        });
+        try {
+          const artworkUrl = currentTrack.lastFmArtUrl || getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 500);
+          const artworkArray = artworkUrl ? [{ src: artworkUrl, sizes: '500x500', type: 'image/jpeg' }] : [];
+          
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: currentTrack.title || 'Unknown Title',
+            artist: currentTrack.artist || 'Unknown Artist',
+            album: currentTrack.album || '',
+            artwork: artworkArray
+          });
 
-        navigator.mediaSession.setActionHandler('play', () => usePlayerStore.getState().togglePlay());
-        navigator.mediaSession.setActionHandler('pause', () => usePlayerStore.getState().togglePlay());
-        navigator.mediaSession.setActionHandler('previoustrack', () => usePlayerStore.getState().playPrev());
-        navigator.mediaSession.setActionHandler('nexttrack', () => usePlayerStore.getState().playNext());
+          navigator.mediaSession.setActionHandler('play', () => usePlayerStore.getState().togglePlay());
+          navigator.mediaSession.setActionHandler('pause', () => usePlayerStore.getState().togglePlay());
+          navigator.mediaSession.setActionHandler('previoustrack', () => usePlayerStore.getState().playPrev());
+          navigator.mediaSession.setActionHandler('nexttrack', () => usePlayerStore.getState().playNext());
+          
+          navigator.mediaSession.setActionHandler('seekto', (details) => {
+            if (audioRef.current) {
+              const newTime = details.seekTime;
+              audioRef.current.currentTime = newTime;
+              usePlayerStore.getState().setProgress(newTime);
+            }
+          });
+
+          navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            if (audioRef.current) {
+              const skipTime = details.seekOffset || 10;
+              const newTime = Math.max(audioRef.current.currentTime - skipTime, 0);
+              audioRef.current.currentTime = newTime;
+              usePlayerStore.getState().setProgress(newTime);
+            }
+          });
+
+          navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            if (audioRef.current) {
+              const skipTime = details.seekOffset || 10;
+              const newTime = Math.min(audioRef.current.currentTime + skipTime, audioRef.current.duration || 0);
+              audioRef.current.currentTime = newTime;
+              usePlayerStore.getState().setProgress(newTime);
+            }
+          });
+        } catch (e) {
+          console.error("Failed to set mediaSession metadata", e);
+        }
       } else {
         navigator.mediaSession.metadata = null;
       }
@@ -71,6 +102,18 @@ export default function GlobalAudioPlayer() {
       const curTime = audioRef.current.currentTime;
       const dur = audioRef.current.duration;
       setProgress(curTime);
+
+      if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur > 0 && !isNaN(dur) && !isNaN(curTime)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: dur,
+            playbackRate: audioRef.current.playbackRate,
+            position: curTime
+          });
+        } catch(e) {
+          // ignore
+        }
+      }
 
       // Scrobble at 50% or 4 minutes, whichever is smaller
       if (currentTrack && dur > 0 && !scrobbledTrackIds.current.has(currentTrack.id)) {

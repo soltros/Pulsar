@@ -193,6 +193,18 @@ app.post('/api/metadata/refresh', (req, res) => {
   }
 });
 
+app.get('/api/metadata/all', (req, res) => {
+  try {
+    const artists = db.prepare('SELECT * FROM artists').all();
+    const albums = db.prepare('SELECT * FROM albums').all();
+    const tracks = db.prepare('SELECT * FROM tracks').all();
+    res.json({ artists, albums, tracks });
+  } catch (error) {
+    console.error('Error fetching all metadata:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Serve static frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '..', 'dist')));

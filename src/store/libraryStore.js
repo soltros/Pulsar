@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../lib/db';
 import { fetchApi } from '../lib/api';
-import { useSettingsStore } from './settingsStore';
 
 export const useLibraryStore = create((set, get) => ({
   isSyncing: false,
@@ -51,6 +50,11 @@ export const useLibraryStore = create((set, get) => ({
       const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
       const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
       
+      const metadataRes = await fetch('/api/metadata/all').then(r => r.json()).catch(() => ({ artists: [], albums: [], tracks: [] }));
+      const backendArtists = new Map(metadataRes.artists?.map(a => [a.id, a]) || []);
+      const backendAlbums = new Map(metadataRes.albums?.map(a => [a.id, a]) || []);
+      const backendTracks = new Map(metadataRes.tracks?.map(t => [t.id, t]) || []);
+
       let artists = [];
       let allArtists = [];
       if (artistsRes.status === 'fulfilled' && artistsRes.value?.artists?.index) {
@@ -61,12 +65,14 @@ export const useLibraryStore = create((set, get) => ({
         const existingArtistsArray = await db.artists.toArray();
         const existingArtists = new Map(existingArtistsArray.map(a => [a.id, a]));
         allArtists.forEach(artist => {
+          const backend = backendArtists.get(artist.id);
           const existing = existingArtists.get(artist.id);
-          if (existing?.lastFmArtUrl) {
-            artist.lastFmArtUrl = existing.lastFmArtUrl;
+          
+          if (backend?.lastFmArtUrl || existing?.lastFmArtUrl) {
+            artist.lastFmArtUrl = backend?.lastFmArtUrl || existing?.lastFmArtUrl;
           }
-          if (existing?.bio) {
-            artist.bio = existing.bio;
+          if (backend?.bio || existing?.bio) {
+            artist.bio = backend?.bio || existing?.bio;
           }
         });
 
@@ -85,9 +91,12 @@ export const useLibraryStore = create((set, get) => ({
       const existingSongs = new Map(existingSongsArray.map(s => [s.id, s]));
       const songMap = new Map();
       [...songs].forEach(song => {
+        const backend = backendTracks?.get(song.id);
         const existing = existingSongs.get(song.id);
-        if (existing?.lastFmArtUrl) song.lastFmArtUrl = existing.lastFmArtUrl;
-        if (existing?.description) song.description = existing.description;
+        
+        if (backend?.lastFmArtUrl || existing?.lastFmArtUrl) song.lastFmArtUrl = backend?.lastFmArtUrl || existing?.lastFmArtUrl;
+        if (backend?.description || existing?.description) song.description = backend?.description || existing?.description;
+        
         songMap.set(song.id, song);
       });
       const uniqueSongs = Array.from(songMap.values());
@@ -101,12 +110,14 @@ export const useLibraryStore = create((set, get) => ({
 
       const albumMap = new Map();
       [...favorites, ...topRated, ...recentlyAdded, ...recentlyPlayed, ...mostPlayed, ...random].forEach(album => {
+        const backend = backendAlbums?.get(album.id);
         const existing = existingAlbums.get(album.id);
-        if (existing?.lastFmArtUrl) {
-          album.lastFmArtUrl = existing.lastFmArtUrl;
+        
+        if (backend?.lastFmArtUrl || existing?.lastFmArtUrl) {
+          album.lastFmArtUrl = backend?.lastFmArtUrl || existing?.lastFmArtUrl;
         }
-        if (existing?.description) {
-          album.description = existing.description;
+        if (backend?.description || existing?.description) {
+          album.description = backend?.description || existing?.description;
         }
         albumMap.set(album.id, album);
       });
@@ -233,7 +244,7 @@ export const useLibraryStore = create((set, get) => ({
                 if (subInfo?.artistInfo2?.largeImageUrl || subInfo?.artistInfo2?.mediumImageUrl) {
                   updatePayload.lastFmArtUrl = subInfo.artistInfo2.largeImageUrl || subInfo.artistInfo2.mediumImageUrl;
                 }
-              } catch(e) {}
+              } catch(e) { /* ignore */ }
             }
             
             if (Object.keys(updatePayload).length > 0) {

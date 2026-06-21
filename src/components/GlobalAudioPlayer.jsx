@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '../store/playerStore';
-import { getApiUrl } from '../lib/api';
+import { getApiUrl, getCoverArtUrl } from '../lib/api';
 
 export default function GlobalAudioPlayer() {
   const audioRef = useRef(null);
@@ -29,10 +29,39 @@ export default function GlobalAudioPlayer() {
         console.error("Playback failed:", err);
         // Sometimes browsers block autoplay, handle gracefully if needed
       });
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
     } else {
       audioRef.current.pause();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
     }
   }, [isPlaying, currentTrack]);
+
+  // Handle Media Session metadata and actions for MPRIS / hardware media keys
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      if (currentTrack) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title,
+          artist: currentTrack.artist,
+          album: currentTrack.album || '',
+          artwork: [
+            { src: currentTrack.lastFmArtUrl || getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 500), sizes: '500x500', type: 'image/jpeg' }
+          ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => usePlayerStore.getState().togglePlay());
+        navigator.mediaSession.setActionHandler('pause', () => usePlayerStore.getState().togglePlay());
+        navigator.mediaSession.setActionHandler('previoustrack', () => usePlayerStore.getState().playPrev());
+        navigator.mediaSession.setActionHandler('nexttrack', () => usePlayerStore.getState().playNext());
+      } else {
+        navigator.mediaSession.metadata = null;
+      }
+    }
+  }, [currentTrack]);
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {

@@ -48,8 +48,15 @@ export default function GlobalAudioPlayer() {
     if ('mediaSession' in navigator) {
       if (currentTrack) {
         try {
-          const artworkUrl = currentTrack.lastFmArtUrl || getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 500);
-          const artworkArray = artworkUrl ? [{ src: artworkUrl, sizes: '500x500', type: 'image/jpeg' }] : [];
+          const artworkUrl = currentTrack.lastFmArtUrl || getCoverArtUrl(currentTrack.coverArt || currentTrack.albumId, 512);
+          const artworkArray = artworkUrl ? [
+            { src: artworkUrl, sizes: '96x96', type: 'image/jpeg' },
+            { src: artworkUrl, sizes: '128x128', type: 'image/jpeg' },
+            { src: artworkUrl, sizes: '192x192', type: 'image/jpeg' },
+            { src: artworkUrl, sizes: '256x256', type: 'image/jpeg' },
+            { src: artworkUrl, sizes: '384x384', type: 'image/jpeg' },
+            { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
+          ] : [];
           
           navigator.mediaSession.metadata = new MediaMetadata({
             title: currentTrack.title || 'Unknown Title',

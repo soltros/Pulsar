@@ -173,10 +173,10 @@ export default function NowPlaying() {
                       {currentTrack.title}
                     </a>
                     <button 
-                      onClick={() => useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : false, 'song')}
+                      onClick={() => useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : !!currentTrack.starred, 'song')}
                       className="p-2 rounded-full shrink-0"
                     >
-                      <Heart className={`w-8 h-8 md:w-10 md:h-10 heart-bounce ${dbSong?.starred ? 'heart-liked' : 'heart-unliked'}`} fill={dbSong?.starred ? 'currentColor' : 'none'} />
+                      <Heart className={`w-8 h-8 md:w-10 md:h-10 heart-bounce ${(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'heart-liked text-primary' : 'heart-unliked text-white/50'}`} fill={(dbSong ? !!dbSong.starred : !!currentTrack.starred) ? 'currentColor' : 'none'} />
                     </button>
                   </div>
                   <button 

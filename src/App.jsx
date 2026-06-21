@@ -117,11 +117,9 @@ function TopBar({ onOpenSettings, onOpenSidebar }) {
         <button onClick={onOpenSettings} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors md:hidden">
           <Settings className="w-5 h-5 text-white" />
         </button>
-        <button className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-primary p-0.5">
-          <div className="w-full h-full bg-black/50 rounded-[10px] flex items-center justify-center backdrop-blur-sm border border-white/20">
-            <span className="text-sm font-bold text-white">D</span>
-          </div>
-        </button>
+        <div className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 hidden md:flex items-center justify-center text-white cursor-pointer shadow-lg border border-white/10 transition-colors" onClick={onOpenSettings}>
+          <PulsarLogo className="w-5 h-5" />
+        </div>
       </div>
     </header>
   );
@@ -181,11 +179,11 @@ function PlayerBar() {
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : false, 'song');
+              useLibraryStore.getState().toggleStar(currentTrack.id, dbSong ? !!dbSong.starred : (currentTrack.starred ?? false), 'song');
             }}
             className="p-2 rounded-full shrink-0"
           >
-            <Heart className={`w-5 h-5 heart-bounce ${dbSong?.starred ? 'heart-liked text-primary' : 'heart-unliked text-white/50'}`} fill={dbSong?.starred ? 'currentColor' : 'none'} />
+            <Heart className={`w-5 h-5 heart-bounce ${(dbSong ? !!dbSong.starred : (currentTrack.starred ?? false)) ? 'heart-liked text-primary' : 'heart-unliked text-white/50'}`} fill={(dbSong ? !!dbSong.starred : (currentTrack.starred ?? false)) ? 'currentColor' : 'none'} />
           </button>
         )}
       </div>
@@ -571,8 +569,8 @@ function SettingsModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#16171d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-[#16171d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white">
           <X className="w-5 h-5" />
         </button>

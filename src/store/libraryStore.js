@@ -20,6 +20,7 @@ export const useLibraryStore = create((set, get) => ({
   contextMenu: { isOpen: false, x: 0, y: 0, target: null, type: null },
   openContextMenu: (e, target, type) => {
     e.preventDefault();
+    e.stopPropagation();
     set({ contextMenu: { isOpen: true, x: e.clientX, y: e.clientY, target, type } });
   },
   closeContextMenu: () => set(state => ({ contextMenu: { ...state.contextMenu, isOpen: false } })),

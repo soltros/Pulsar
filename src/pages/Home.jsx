@@ -187,7 +187,6 @@ export function HorizontalRow({ title, items, renderItem, isSyncing }) {
           <h2 className="text-xl font-bold text-white">{title}</h2>
           {isSyncing && <span className="text-xs font-medium text-primary animate-pulse bg-primary/20 px-2 py-0.5 rounded-full">Syncing...</span>}
         </div>
-        <a href="#" className="text-xs font-semibold text-white/50 hover:text-white uppercase tracking-wider transition-colors">See all</a>
       </div>
       <div className="flex overflow-x-auto gap-4 md:gap-5 pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 md:-mx-8 md:px-8">
         {items.map((item) => (

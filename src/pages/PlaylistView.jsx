@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchApi, getCoverArtUrl } from '../lib/api';
 import { usePlayerStore } from '../store/playerStore';
-import { Play, Clock, Hash, Pause } from 'lucide-react';
+import { Play, Clock, Hash, Pause, Shuffle } from 'lucide-react';
 import PulsarLogo from '../components/PulsarLogo';
 import PlaceholderArt from '../components/PlaceholderArt';
 
@@ -48,6 +48,14 @@ export default function PlaylistView() {
       togglePlay();
     } else {
       playTrack(playlist.entry[0], playlist.entry, 0);
+    }
+  };
+
+  const handleShuffleAll = () => {
+    if (playlist?.entry) {
+      usePlayerStore.setState({ isShuffle: true });
+      // playTrack will automatically shuffle the queue if isShuffle is true
+      playTrack(playlist.entry[Math.floor(Math.random() * playlist.entry.length)], playlist.entry, 0);
     }
   };
 
@@ -100,6 +108,12 @@ export default function PlaylistView() {
               className="mt-4 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
             >
               {(isCurrentPlaylistPlaying && isPlaying) ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
+            </button>
+            <button 
+              onClick={handleShuffleAll}
+              className="mt-4 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white"
+            >
+              <Shuffle className="w-6 h-6" />
             </button>
           </div>
         </div>

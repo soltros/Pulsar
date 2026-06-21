@@ -144,6 +144,29 @@ export default function GlobalAudioPlayer() {
       scrobbledTrackIds.current.add(currentTrack.id);
       fetchApi('scrobble', { id: currentTrack.id, submission: true }).catch(console.error);
     }
+    
+    // Synchronously set src and play to keep background audio session alive on iOS/Android
+    const repeatMode = usePlayerStore.getState().repeatMode;
+    let nextTrack = null;
+    
+    if (repeatMode === 'one') {
+      nextTrack = currentTrack;
+    } else if (currentIndex < queue.length - 1) {
+      nextTrack = queue[currentIndex + 1];
+    } else if (repeatMode === 'all') {
+      nextTrack = queue[0];
+    }
+    
+    if (nextTrack && audioRef.current) {
+      const nextUrl = getApiUrl('stream', { id: nextTrack.id });
+      if (repeatMode === 'one') {
+        audioRef.current.currentTime = 0;
+      } else {
+        audioRef.current.src = nextUrl;
+      }
+      audioRef.current.play().catch(e => console.error("Background play failed:", e));
+    }
+
     playNext();
   };
 

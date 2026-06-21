@@ -18,7 +18,8 @@ ENV NODE_ENV=production
 
 # Copy package files and install only production dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && \
+    apk add --no-cache ffmpeg
 
 # Copy backend files
 COPY server/ ./server/

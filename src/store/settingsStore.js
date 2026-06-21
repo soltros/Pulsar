@@ -9,9 +9,13 @@ export const useSettingsStore = create(
       pinnedPlaylists: [],
       autoFetchHomeArt: false,
       hideDuplicateTracks: true,
+      enableTagWriting: false,
+      musicMountPath: '/app/media/music',
       
       toggleAutoFetchHomeArt: () => set((state) => ({ autoFetchHomeArt: !state.autoFetchHomeArt })),
       toggleHideDuplicateTracks: () => set((state) => ({ hideDuplicateTracks: !state.hideDuplicateTracks })),
+      toggleEnableTagWriting: () => set((state) => ({ enableTagWriting: !state.enableTagWriting })),
+      setMusicMountPath: (path) => set({ musicMountPath: path }),
       
       togglePinPlaylist: (playlist) => set((state) => {
         const isPinned = state.pinnedPlaylists.find(p => p.id === playlist.id);

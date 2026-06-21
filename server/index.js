@@ -3,6 +3,7 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { injectTags } from './tags.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -178,8 +179,37 @@ app.get('/api/metadata/track', async (req, res) => {
     }
     return res.json(row || {});
   } catch (error) {
-    console.error('Error fetching track metadata:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Track metadata error:', error);
+    res.status(500).json({ error: 'Failed to fetch track metadata' });
+  }
+});
+
+app.post('/api/tags/inject', async (req, res) => {
+  const { filePath, mountPath, tags, artUrl, enableWrite } = req.body;
+  if (!enableWrite) {
+    return res.status(403).json({ error: 'Filesystem write access is disabled in admin settings.' });
+  }
+  if (!filePath || !mountPath || !tags) {
+    return res.status(400).json({ error: 'Missing parameters for tag injection.' });
+  }
+
+  try {
+    // Construct absolute path safely
+    // The filePath comes from Subsonic API usually as something like 'Music/Artist/Album/Song.mp3'
+    // The mountPath is the user's admin configuration like '/app/media/music'
+    // Prevent directory traversal
+    const safeFilePath = path.normalize(filePath).replace(/^(\.\.[/\\\\])+/, '');
+    const absolutePath = path.join(mountPath, safeFilePath);
+
+    if (!absolutePath.startsWith(mountPath)) {
+      return res.status(403).json({ error: 'Invalid path resolution.' });
+    }
+
+    await injectTags(absolutePath, tags, artUrl);
+    res.json({ success: true, message: 'Tags written successfully.' });
+  } catch (err) {
+    console.error('Tag injection error:', err);
+    res.status(500).json({ error: err.message || 'Failed to inject tags' });
   }
 });
 

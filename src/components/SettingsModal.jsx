@@ -5,7 +5,16 @@ import { useLibraryStore } from '../store/libraryStore';
 import { fetchApi } from '../lib/api';
 
 export default function SettingsModal({ isOpen, onClose }) {
-  const { autoFetchHomeArt, toggleAutoFetchHomeArt, hideDuplicateTracks, toggleHideDuplicateTracks } = useSettingsStore();
+  const { 
+    autoFetchHomeArt, 
+    hideDuplicateTracks,
+    enableTagWriting,
+    musicMountPath,
+    toggleAutoFetchHomeArt,
+    toggleHideDuplicateTracks,
+    toggleEnableTagWriting,
+    setMusicMountPath
+  } = useSettingsStore();
   const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
   const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
@@ -145,7 +154,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
             <div>
               <h4 className="text-sm font-semibold text-white">Hide Duplicate Tracks</h4>
               <p className="text-xs text-white/50 mt-1 mr-2">Automatically hide duplicate track titles within albums.</p>
@@ -156,6 +165,33 @@ export default function SettingsModal({ isOpen, onClose }) {
             >
               <div className={`w-5 h-5 bg-white rounded-full transition-transform absolute ${hideDuplicateTracks ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
+          </div>
+
+          <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-white">Filesystem Tag Writing (Admin)</h4>
+                <p className="text-xs text-white/50 mt-1 mr-2">Permanently write tags to physical files via Node Backend.</p>
+              </div>
+              <button 
+                onClick={toggleEnableTagWriting}
+                className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${enableTagWriting ? 'bg-primary' : 'bg-white/20'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full transition-transform absolute ${enableTagWriting ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            {enableTagWriting && (
+              <div>
+                <label className="text-xs text-white/70 font-medium mb-1 block">Docker Volume Mount Path</label>
+                <input 
+                  type="text" 
+                  value={musicMountPath}
+                  onChange={(e) => setMusicMountPath(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary transition-colors"
+                  placeholder="/app/media/music"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 mt-6">

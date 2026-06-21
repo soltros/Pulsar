@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchApi, getCoverArtUrl } from '../lib/api';
-import { Heart, Loader, Play, Clock, Hash, MoreHorizontal, ChevronRight, Music, User, Disc } from 'lucide-react';
+import { Heart, Loader, Play, Pause, Shuffle, Clock, Hash, MoreHorizontal, ChevronRight, Music, User, Disc } from 'lucide-react';
 import { useLibraryStore } from '../store/libraryStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useNavigate } from 'react-router-dom';
@@ -71,13 +71,27 @@ export default function HeartsView() {
             <span className="font-semibold text-white">{artists.length} Artists</span>
           </div>
           
-          <button 
-            onClick={() => songs.length > 0 && playTrack(songs[0], songs, 0)}
-            className="mt-6 w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
-            disabled={songs.length === 0}
-          >
-            <Play className="w-6 h-6 ml-1" fill="currentColor" />
-          </button>
+          <div className="flex items-center justify-start gap-3 w-full mt-6">
+            <button 
+              onClick={() => songs.length > 0 && playTrack(songs[0], songs, 0)}
+              className="w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
+              disabled={songs.length === 0}
+            >
+              <Play className="w-6 h-6 ml-1" fill="currentColor" />
+            </button>
+            <button 
+              onClick={() => {
+                if (songs.length > 0) {
+                  usePlayerStore.setState({ isShuffle: true });
+                  playTrack(songs[Math.floor(Math.random() * songs.length)], songs, 0);
+                }
+              }}
+              className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white"
+              disabled={songs.length === 0}
+            >
+              <Shuffle className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
 

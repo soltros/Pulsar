@@ -46,12 +46,14 @@ export const useLibraryStore = create((set, get) => ({
         fetchApi('getInternetRadioStations')
       ]);
 
-      const favorites = starredRes.status === 'fulfilled' ? starredRes.value?.starred2?.album || [] : [];
-      const topRated = highestRes.status === 'fulfilled' ? highestRes.value?.albumList2?.album || [] : [];
-      const recentlyAdded = newestRes.status === 'fulfilled' ? newestRes.value?.albumList2?.album || [] : [];
-      const recentlyPlayed = recentRes.status === 'fulfilled' ? recentRes.value?.albumList2?.album || [] : [];
-      const mostPlayed = frequentRes.status === 'fulfilled' ? frequentRes.value?.albumList2?.album || [] : [];
-      const random = randomRes.status === 'fulfilled' ? randomRes.value?.albumList2?.album || [] : [];
+      const getArray = (val) => Array.isArray(val) ? val : (val ? [val] : []);
+      
+      const favorites = starredRes.status === 'fulfilled' ? getArray(starredRes.value?.starred2?.album) : [];
+      const topRated = highestRes.status === 'fulfilled' ? getArray(highestRes.value?.albumList2?.album) : [];
+      const recentlyAdded = newestRes.status === 'fulfilled' ? getArray(newestRes.value?.albumList2?.album) : [];
+      const recentlyPlayed = recentRes.status === 'fulfilled' ? getArray(recentRes.value?.albumList2?.album) : [];
+      const mostPlayed = frequentRes.status === 'fulfilled' ? getArray(frequentRes.value?.albumList2?.album) : [];
+      const random = randomRes.status === 'fulfilled' ? getArray(randomRes.value?.albumList2?.album) : [];
       
       const metadataRes = await fetch('/api/metadata/all').then(r => r.json()).catch(() => ({ artists: [], albums: [], tracks: [] }));
       const backendArtists = new Map(metadataRes.artists?.map(a => [a.id, a]) || []);
@@ -61,8 +63,8 @@ export const useLibraryStore = create((set, get) => ({
       let artists = [];
       let allArtists = [];
       if (artistsRes.status === 'fulfilled' && artistsRes.value?.artists?.index) {
-        artistsRes.value.artists.index.forEach(idx => {
-          if (idx.artist) allArtists.push(...idx.artist);
+        getArray(artistsRes.value.artists.index).forEach(idx => {
+          if (idx.artist) allArtists.push(...getArray(idx.artist));
         });
         
         const existingArtistsArray = await db.artists.toArray();
@@ -86,8 +88,8 @@ export const useLibraryStore = create((set, get) => ({
         artists = [...allArtists].sort(() => 0.5 - Math.random()).slice(0, 15);
       }
 
-      const songs = songsRes.status === 'fulfilled' ? songsRes.value?.randomSongs?.song || [] : [];
-      const radios = radiosRes.status === 'fulfilled' ? radiosRes.value?.internetRadioStations?.internetRadioStation || [] : [];
+      const songs = songsRes.status === 'fulfilled' ? getArray(songsRes.value?.randomSongs?.song) : [];
+      const radios = radiosRes.status === 'fulfilled' ? getArray(radiosRes.value?.internetRadioStations?.internetRadioStation) : [];
 
       // Merge unique songs for IndexedDB
       const existingSongsArray = await db.songs.toArray();
@@ -134,7 +136,7 @@ export const useLibraryStore = create((set, get) => ({
       
       // 2. Fetch Playlists
       const playlistsRes = await fetchApi('getPlaylists').catch(() => null);
-      let playlists = playlistsRes?.playlists?.playlist || [];
+      let playlists = getArray(playlistsRes?.playlists?.playlist);
       if (playlists.length > 0) {
         await db.playlists.bulkPut(playlists);
       }

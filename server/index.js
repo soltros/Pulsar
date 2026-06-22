@@ -190,8 +190,11 @@ app.post('/api/tags/inject', async (req, res) => {
     return res.status(403).json({ error: 'Filesystem write access is disabled in admin settings.' });
   }
   if (!filePath || !mountPath || !tags) {
+    console.warn(`[ArtSync] ❌ Rejected request due to missing parameters.`);
     return res.status(400).json({ error: 'Missing parameters for tag injection.' });
   }
+
+  console.log(`[ArtSync] 📩 Received artwork sync request for album containing: ${filePath}`);
 
   try {
     // Construct absolute path safely

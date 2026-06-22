@@ -57,6 +57,8 @@ app.use(express.json());
 app.get('/api/metadata/artist', async (req, res) => {
   const { name, id } = req.query;
   if (!name || !id) return res.status(400).json({ error: 'Missing name or id' });
+  
+  console.log(`[Metadata] 🔍 Artist request: ${name} (ID: ${id})`);
 
   try {
     const stmt = db.prepare('SELECT * FROM artists WHERE id = ?');
@@ -69,6 +71,7 @@ app.get('/api/metadata/artist', async (req, res) => {
     // Need to fetch from Last.fm
     if (!LASTFM_API_KEY) return res.json(row || {}); // Return what we have if no API key
 
+    console.log(`[Last.fm] 🌐 Fetching missing artist data for: ${name}`);
     const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(name)}&api_key=${LASTFM_API_KEY}&format=json`;
     const response = await fetch(url);
     const data = await response.json();
@@ -103,6 +106,8 @@ app.get('/api/metadata/album', async (req, res) => {
   const { name, artist, id } = req.query;
   if (!name || !id) return res.status(400).json({ error: 'Missing name or id' });
 
+  console.log(`[Metadata] 💿 Album request: ${name} by ${artist || 'Unknown'} (ID: ${id})`);
+
   try {
     const stmt = db.prepare('SELECT * FROM albums WHERE id = ?');
     const row = stmt.get(id);
@@ -113,6 +118,7 @@ app.get('/api/metadata/album', async (req, res) => {
 
     if (!LASTFM_API_KEY) return res.json(row || {});
 
+    console.log(`[Last.fm] 🌐 Fetching missing album data for: ${name}`);
     const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist || '')}&album=${encodeURIComponent(name)}&api_key=${LASTFM_API_KEY}&format=json`;
     const response = await fetch(url);
     const data = await response.json();
@@ -146,6 +152,8 @@ app.get('/api/metadata/album', async (req, res) => {
 app.get('/api/metadata/track', async (req, res) => {
   const { title, artist, id } = req.query;
   if (!title || !id) return res.status(400).json({ error: 'Missing title or id' });
+
+  console.log(`[Metadata] 🎵 Track request: ${title} by ${artist || 'Unknown'} (ID: ${id})`);
 
   try {
     const stmt = db.prepare('SELECT * FROM tracks WHERE id = ?');
@@ -227,6 +235,7 @@ app.post('/api/metadata/refresh', (req, res) => {
 });
 
 app.get('/api/metadata/all', (req, res) => {
+  console.log(`[Database] 📦 Dumping full metadata cache to client`);
   try {
     const artists = db.prepare('SELECT * FROM artists').all();
     const albums = db.prepare('SELECT * FROM albums').all();

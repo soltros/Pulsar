@@ -52,6 +52,10 @@ export default defineConfig({
       '/api/metadata': {
         target: 'http://localhost:3001',
         changeOrigin: true
+      },
+      '/api/tags': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
       }
     }
   },

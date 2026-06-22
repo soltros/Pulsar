@@ -26,7 +26,7 @@ Requirements: Node.js 22+
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/Pulsar.git
+git clone https://github.com/soltros/Pulsar.git
 cd Pulsar
 
 # Install dependencies

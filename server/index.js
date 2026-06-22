@@ -3,7 +3,7 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { injectTags } from './tags.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,52 +102,6 @@ app.get('/api/metadata/artist', async (req, res) => {
   }
 });
 
-app.get('/api/metadata/album', async (req, res) => {
-  const { name, artist, id } = req.query;
-  if (!name || !id) return res.status(400).json({ error: 'Missing name or id' });
-
-  console.log(`[Metadata] 💿 Album request: ${name} by ${artist || 'Unknown'} (ID: ${id})`);
-
-  try {
-    const stmt = db.prepare('SELECT * FROM albums WHERE id = ?');
-    const row = stmt.get(id);
-
-    if (row && Date.now() - row.lastUpdated < 7 * 24 * 60 * 60 * 1000) {
-      return res.json(row);
-    }
-
-    if (!LASTFM_API_KEY) return res.json(row || {});
-
-    console.log(`[Last.fm] 🌐 Fetching missing album data for: ${name}`);
-    const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist || '')}&album=${encodeURIComponent(name)}&api_key=${LASTFM_API_KEY}&format=json`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.album) {
-      const img = data.album.image?.find(i => i.size === 'extralarge' || i.size === 'mega')?.['#text'] || null;
-      let desc = data.album.wiki?.content || '';
-      desc = desc.replace(/<a href="https:\/\/www\.last\.fm.*$/s, '').trim();
-
-      const newRow = {
-        id,
-        name,
-        artist,
-        description: desc,
-        lastFmArtUrl: img,
-        lastUpdated: Date.now()
-      };
-
-      const insert = db.prepare('INSERT OR REPLACE INTO albums (id, name, artist, description, lastFmArtUrl, lastUpdated) VALUES (?, ?, ?, ?, ?, ?)');
-      insert.run(newRow.id, newRow.name, newRow.artist, newRow.description, newRow.lastFmArtUrl, newRow.lastUpdated);
-
-      return res.json(newRow);
-    }
-    return res.json(row || {});
-  } catch (error) {
-    console.error(`[Metadata Error] ❌ Failed to fetch album metadata for ${name || id}:`, error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 app.get('/api/metadata/track', async (req, res) => {
   const { title, artist, id } = req.query;
@@ -192,37 +146,7 @@ app.get('/api/metadata/track', async (req, res) => {
   }
 });
 
-app.post('/api/tags/inject', async (req, res) => {
-  const { filePath, mountPath, tags, artUrl, enableWrite } = req.body;
-  if (!enableWrite) {
-    return res.status(403).json({ error: 'Filesystem write access is disabled in admin settings.' });
-  }
-  if (!filePath || !mountPath || !tags) {
-    console.warn(`[ArtSync] ❌ Rejected request due to missing parameters.`);
-    return res.status(400).json({ error: 'Missing parameters for tag injection.' });
-  }
 
-  console.log(`[ArtSync] 📩 Received artwork sync request for album containing: ${filePath}`);
-
-  try {
-    // Construct absolute path safely
-    // The filePath comes from Subsonic API usually as something like 'Music/Artist/Album/Song.mp3'
-    // The mountPath is the user's admin configuration like '/app/media/music'
-    // Prevent directory traversal
-    const safeFilePath = path.normalize(filePath).replace(/^(\.\.[/\\\\])+/, '');
-    const absolutePath = path.join(mountPath, safeFilePath);
-
-    if (!absolutePath.startsWith(mountPath)) {
-      return res.status(403).json({ error: 'Invalid path resolution.' });
-    }
-
-    await injectTags(absolutePath, tags, artUrl);
-    res.json({ success: true, message: 'Tags written successfully.' });
-  } catch (err) {
-    console.error(`[ArtSync Error] ❌ Failed to inject tags:`, err);
-    res.status(500).json({ error: err.message || 'Failed to inject tags' });
-  }
-});
 
 app.post('/api/metadata/refresh', (req, res) => {
   // Clear the database or force a refresh. For now, let's just delete all rows.

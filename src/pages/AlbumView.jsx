@@ -88,9 +88,27 @@ export default function AlbumView() {
       setLoading(true);
       setError('');
       try {
-        const data = await fetchApi('getAlbum', { id });
-        if (data.album) {
-          setAlbumData(data.album);
+        const [albumRes, infoRes] = await Promise.allSettled([
+          fetchApi('getAlbum', { id }),
+          fetchApi('getAlbumInfo2', { id })
+        ]);
+
+        let combinedData = null;
+        if (albumRes.status === 'fulfilled' && albumRes.value.album) {
+          combinedData = { ...albumRes.value.album };
+        }
+        
+        if (infoRes.status === 'fulfilled' && infoRes.value.albumInfo2) {
+          if (!combinedData) combinedData = {};
+          if (infoRes.value.albumInfo2.notes) {
+            combinedData.description = infoRes.value.albumInfo2.notes;
+          }
+        }
+
+        if (combinedData) {
+          setAlbumData(combinedData);
+        } else {
+          setError('Album not found');
         }
       } catch (err) {
         setError(err.message);
@@ -101,8 +119,8 @@ export default function AlbumView() {
     loadAlbum();
   }, [id]);
 
-  const album = dbAlbum || albumData;
-  const coverUrl = album?.lastFmArtUrl || getCoverArtUrl(album?.coverArt || album?.id, 400);
+  const album = albumData || dbAlbum;
+  const coverUrl = getCoverArtUrl(album?.coverArt || album?.id, 400);
 
   const formatTime = (seconds) => {
     if (!seconds) return '0:00';

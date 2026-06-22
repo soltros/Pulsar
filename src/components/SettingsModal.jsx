@@ -15,10 +15,8 @@ export default function SettingsModal({ isOpen, onClose }) {
     toggleEnableTagWriting,
     setMusicMountPath
   } = useSettingsStore();
-  const scanLastFmArt = useLibraryStore(state => state.scanLastFmArt);
   const scanLastFmArtists = useLibraryStore(state => state.scanLastFmArtists);
   const scanLastFmTracks = useLibraryStore(state => state.scanLastFmTracks);
-  const [isScanning, setIsScanning] = useState(false);
   const [isScanningArtists, setIsScanningArtists] = useState(false);
   const [isScanningTracks, setIsScanningTracks] = useState(false);
 
@@ -35,11 +33,6 @@ export default function SettingsModal({ isOpen, onClose }) {
     }
   };
 
-  const handleScan = async () => {
-    setIsScanning(true);
-    await scanLastFmArt();
-    setIsScanning(false);
-  };
 
   const handleScanArtists = async () => {
     setIsScanningArtists(true);
@@ -167,41 +160,11 @@ export default function SettingsModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-white">Save Cover Art to Album Folders (Admin)</h4>
-                <p className="text-xs text-white/50 mt-1 mr-2">Download Last.fm art as cover.jpg/folder.jpg sidecar files.</p>
-              </div>
-              <button 
-                onClick={toggleEnableTagWriting}
-                className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${enableTagWriting ? 'bg-primary' : 'bg-white/20'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full transition-transform absolute ${enableTagWriting ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-            {enableTagWriting && (
-              <div>
-                <label className="text-xs text-white/70 font-medium mb-1 block">Docker Volume Mount Path</label>
-                <input 
-                  type="text" 
-                  value={musicMountPath}
-                  onChange={(e) => setMusicMountPath(e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary transition-colors"
-                  placeholder="/app/media/music"
-                />
-              </div>
-            )}
-          </div>
 
           <div className="space-y-4 mt-6">
             <h4 className="text-sm font-semibold text-white">Library Tools</h4>
             
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={handleScan} disabled={isScanning} className="w-full bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white font-medium py-2 rounded-xl transition-colors border border-white/10 text-xs flex items-center justify-center gap-2">
-                {isScanning ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                Scan Albums
-              </button>
+            <div className="grid grid-cols-1 gap-3">
               <button onClick={handleScanArtists} disabled={isScanningArtists} className="w-full bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white font-medium py-2 rounded-xl transition-colors border border-white/10 text-xs flex items-center justify-center gap-2">
                 {isScanningArtists ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
                 Scan Artists

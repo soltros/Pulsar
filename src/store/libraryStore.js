@@ -191,60 +191,6 @@ export const useLibraryStore = create((set, get) => ({
     }
   },
 
-  scanLastFmArt: async () => {
-    try {
-      // Get all albums currently in our local DB
-      const albums = await db.albums.toArray();
-      
-      for (const album of albums) {
-        // Only fetch if we don't already have a high-res lastfm url
-        if (album.lastFmArtUrl) continue;
-        if (!album.artist || !album.name) continue;
-
-        try {
-          const res = await fetch(`/api/metadata/album?id=${album.id}&name=${encodeURIComponent(album.name)}&artist=${encodeURIComponent(album.artist)}`);
-          if (!res.ok) continue;
-          
-          const data = await res.json();
-          if (data && Object.keys(data).length > 0) {
-            const updatePayload = {};
-            if (data.lastFmArtUrl) {
-              updatePayload.lastFmArtUrl = data.lastFmArtUrl;
-              
-              const { enableTagWriting, musicMountPath } = useSettingsStore.getState();
-              if (enableTagWriting && musicMountPath) {
-                // Fetch album details to get the relative path of the first song
-                const albumDetails = await fetchApi('getAlbum', { id: album.id }).catch(() => null);
-                const firstSongPath = albumDetails?.album?.song?.[0]?.path;
-                
-                if (firstSongPath) {
-                  fetch('/api/tags/inject', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      filePath: firstSongPath,
-                      mountPath: musicMountPath,
-                      artUrl: data.lastFmArtUrl,
-                      enableWrite: enableTagWriting
-                    })
-                  }).catch(console.error);
-                }
-              }
-            }
-            if (data.description) updatePayload.description = data.description;
-            
-            if (Object.keys(updatePayload).length > 0) {
-              await db.albums.update(album.id, updatePayload);
-            }
-          }
-        } catch (e) {
-          console.debug(`Metadata scan failed for ${album.name}:`, e);
-        }
-      }
-    } catch (error) {
-      console.error('Last.fm Scan failed:', error);
-    }
-  },
 
   scanLastFmArtists: async () => {
     try {

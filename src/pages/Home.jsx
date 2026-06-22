@@ -74,7 +74,7 @@ export function ConnectedAlbumCard({ album, forceLoadArt }) {
           onContextMenu={(e) => useLibraryStore.getState().openContextMenu(e, dbAlbum, 'album')}
           className="relative aspect-square rounded-xl overflow-hidden mb-3 shadow-lg shadow-black/40 group-hover:shadow-primary/20 transition-all duration-500"
         >
-          <LazyImage src={dbAlbum.lastFmArtUrl || getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" forceLoadArt={forceLoadArt} />
+          <LazyImage src={getCoverArtUrl(dbAlbum.coverArt)} alt={dbAlbum.name} className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" forceLoadArt={forceLoadArt} />
           <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
           <button 
             className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"

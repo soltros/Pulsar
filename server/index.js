@@ -97,7 +97,7 @@ app.get('/api/metadata/artist', async (req, res) => {
     
     return res.json(row || {});
   } catch (error) {
-    console.error('Error fetching artist metadata:', error);
+    console.error(`[Metadata Error] ❌ Failed to fetch artist metadata for ${name || id}:`, error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -144,7 +144,7 @@ app.get('/api/metadata/album', async (req, res) => {
     }
     return res.json(row || {});
   } catch (error) {
-    console.error('Error fetching album metadata:', error);
+    console.error(`[Metadata Error] ❌ Failed to fetch album metadata for ${name || id}:`, error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -187,7 +187,7 @@ app.get('/api/metadata/track', async (req, res) => {
     }
     return res.json(row || {});
   } catch (error) {
-    console.error('Track metadata error:', error);
+    console.error(`[Metadata Error] ❌ Failed to fetch track metadata for ${title || id}:`, error);
     res.status(500).json({ error: 'Failed to fetch track metadata' });
   }
 });
@@ -219,7 +219,7 @@ app.post('/api/tags/inject', async (req, res) => {
     await injectTags(absolutePath, tags, artUrl);
     res.json({ success: true, message: 'Tags written successfully.' });
   } catch (err) {
-    console.error('Tag injection error:', err);
+    console.error(`[ArtSync Error] ❌ Failed to inject tags:`, err);
     res.status(500).json({ error: err.message || 'Failed to inject tags' });
   }
 });
@@ -230,6 +230,7 @@ app.post('/api/metadata/refresh', (req, res) => {
     db.exec('DELETE FROM artists; DELETE FROM albums; DELETE FROM tracks;');
     res.json({ success: true, message: 'Metadata cache cleared successfully' });
   } catch (err) {
+    console.error(`[Database Error] ❌ Failed to clear cache:`, err);
     res.status(500).json({ error: 'Failed to clear cache' });
   }
 });
@@ -242,7 +243,7 @@ app.get('/api/metadata/all', (req, res) => {
     const tracks = db.prepare('SELECT * FROM tracks').all();
     res.json({ artists, albums, tracks });
   } catch (error) {
-    console.error('Error fetching all metadata:', error);
+    console.error(`[Database Error] ❌ Failed to fetch all metadata cache:`, error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

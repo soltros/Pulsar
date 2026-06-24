@@ -10,9 +10,7 @@ services:
   # Pulsar PWA Client
   # ---------------------------------------------------
   pulsar_client:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/soltros/pulsar:latest
     container_name: pulsar_web
     # Use PORT from .env, or default to 80
     ports:

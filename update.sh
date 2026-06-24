@@ -6,8 +6,8 @@ echo "Updating Pulsar to the latest release..."
 # Pull the latest changes from the repository
 git pull origin main
 
-echo "Rebuilding and restarting Docker containers..."
-# Rebuild the container and restart in detached mode
-docker-compose up --build -d
+echo "Pulling the latest pre-built Docker image and restarting..."
+docker-compose pull
+docker-compose up -d
 
 echo "Update complete! Pulsar is now running."

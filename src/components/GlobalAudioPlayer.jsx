@@ -2,8 +2,12 @@ import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { getApiUrl, getCoverArtUrl, fetchApi } from '../lib/api';
 
+// Create a singleton Audio object completely detached from React's render tree.
+// This prevents React re-renders from ever interrupting playback (a common issue on mobile browsers).
+const audioObj = new Audio();
+audioObj.preload = "auto";
+
 export default function GlobalAudioPlayer() {
-  const audioRef = useRef(null);
   const setAudioRef = usePlayerStore(state => state.setAudioRef);
   const queue = usePlayerStore(state => state.queue);
   const currentIndex = usePlayerStore(state => state.currentIndex);
@@ -16,34 +20,134 @@ export default function GlobalAudioPlayer() {
   const volume = usePlayerStore(state => state.volume);
   const scrobbledTrackIds = useRef(new Set());
 
+  // Expose the audioObj to the store exactly once
   useEffect(() => {
-    if (audioRef.current) {
-      setAudioRef(audioRef);
-      audioRef.current.volume = volume;
-    }
-  }, [setAudioRef, volume]);
+    setAudioRef({ current: audioObj });
+  }, [setAudioRef]);
 
-  // Handle Play/Pause changes
+  // Volume
   useEffect(() => {
-    if (!audioRef.current) return;
-    
+    audioObj.volume = volume;
+  }, [volume]);
+
+  // Handle source changes (when track changes)
+  useEffect(() => {
+    if (currentTrack) {
+      const newSrc = getApiUrl('stream', { id: currentTrack.id });
+      // Only set src if it's genuinely different to avoid interrupting current stream
+      if (audioObj.src !== newSrc) {
+        audioObj.src = newSrc;
+        if (isPlaying) {
+          audioObj.play().catch(e => console.error("Playback failed:", e));
+        }
+      }
+    }
+  }, [currentTrack?.id]);
+
+  // Handle Play/Pause
+  useEffect(() => {
     if (isPlaying && currentTrack) {
-      audioRef.current.play().catch(err => {
-        console.error("Playback failed:", err);
-        // Sometimes browsers block autoplay, handle gracefully if needed
-      });
+      if (audioObj.paused && audioObj.src) {
+        audioObj.play().catch(e => console.error("Playback failed:", e));
+      }
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'playing';
       }
     } else {
-      audioRef.current.pause();
+      if (!audioObj.paused) {
+        audioObj.pause();
+      }
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
       }
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, currentTrack?.id]);
 
-  // Handle Media Session metadata and actions for MPRIS / hardware media keys
+  // Handle native audio events
+  useEffect(() => {
+    const handleTimeUpdate = () => {
+      const curTime = audioObj.currentTime;
+      const dur = audioObj.duration;
+      setProgress(curTime);
+
+      if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur > 0 && !isNaN(dur) && !isNaN(curTime)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: dur,
+            playbackRate: audioObj.playbackRate,
+            position: curTime
+          });
+        } catch(e) { /* ignore */ }
+      }
+
+      // Scrobble at 50% or 4 minutes
+      const state = usePlayerStore.getState();
+      const track = state.currentIndex >= 0 ? state.queue[state.currentIndex] : null;
+      if (track && dur > 0 && !scrobbledTrackIds.current.has(track.id)) {
+        const scrobblePoint = Math.min(dur / 2, 240);
+        if (curTime >= scrobblePoint) {
+          scrobbledTrackIds.current.add(track.id);
+          fetchApi('scrobble', { id: track.id, submission: true }).catch(console.error);
+        }
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(audioObj.duration);
+    };
+
+    const handleEnded = () => {
+      const state = usePlayerStore.getState();
+      const track = state.currentIndex >= 0 ? state.queue[state.currentIndex] : null;
+      if (track && !scrobbledTrackIds.current.has(track.id)) {
+        scrobbledTrackIds.current.add(track.id);
+        fetchApi('scrobble', { id: track.id, submission: true }).catch(console.error);
+      }
+      
+      const repeatMode = state.repeatMode;
+      let nextTrack = null;
+      
+      if (repeatMode === 'one') {
+        nextTrack = track;
+      } else if (state.currentIndex < state.queue.length - 1) {
+        nextTrack = state.queue[state.currentIndex + 1];
+      } else if (repeatMode === 'all') {
+        nextTrack = state.queue[0];
+      }
+      
+      // Attempt synchronous background play transition for mobile
+      if (nextTrack) {
+        const nextUrl = getApiUrl('stream', { id: nextTrack.id });
+        if (repeatMode === 'one') {
+          audioObj.currentTime = 0;
+        } else {
+          audioObj.src = nextUrl;
+        }
+        audioObj.play().catch(e => console.error("Background play failed:", e));
+      }
+
+      playNext();
+    };
+
+    const handleError = (e) => {
+      console.error("Audio playback error:", e);
+      // Auto-skip on broken stream if not paused? Optional.
+    };
+
+    audioObj.addEventListener('timeupdate', handleTimeUpdate);
+    audioObj.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audioObj.addEventListener('ended', handleEnded);
+    audioObj.addEventListener('error', handleError);
+
+    return () => {
+      audioObj.removeEventListener('timeupdate', handleTimeUpdate);
+      audioObj.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audioObj.removeEventListener('ended', handleEnded);
+      audioObj.removeEventListener('error', handleError);
+    };
+  }, [setProgress, setDuration, playNext]);
+
+  // Handle Media Session metadata
   useEffect(() => {
     if ('mediaSession' in navigator) {
       if (currentTrack) {
@@ -62,7 +166,6 @@ export default function GlobalAudioPlayer() {
             artwork: artworkArray
           });
 
-          // Also update document title, which iOS sometimes prefers for lockscreen
           document.title = `${currentTrack.title} - ${currentTrack.artist}`;
 
           navigator.mediaSession.setActionHandler('play', () => usePlayerStore.getState().togglePlay());
@@ -71,29 +174,23 @@ export default function GlobalAudioPlayer() {
           navigator.mediaSession.setActionHandler('nexttrack', () => usePlayerStore.getState().playNext());
           
           navigator.mediaSession.setActionHandler('seekto', (details) => {
-            if (audioRef.current) {
-              const newTime = details.seekTime;
-              audioRef.current.currentTime = newTime;
-              usePlayerStore.getState().setProgress(newTime);
-            }
+            const newTime = details.seekTime;
+            audioObj.currentTime = newTime;
+            usePlayerStore.getState().setProgress(newTime);
           });
 
           navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-            if (audioRef.current) {
-              const skipTime = details.seekOffset || 10;
-              const newTime = Math.max(audioRef.current.currentTime - skipTime, 0);
-              audioRef.current.currentTime = newTime;
-              usePlayerStore.getState().setProgress(newTime);
-            }
+            const skipTime = details.seekOffset || 10;
+            const newTime = Math.max(audioObj.currentTime - skipTime, 0);
+            audioObj.currentTime = newTime;
+            usePlayerStore.getState().setProgress(newTime);
           });
 
           navigator.mediaSession.setActionHandler('seekforward', (details) => {
-            if (audioRef.current) {
-              const skipTime = details.seekOffset || 10;
-              const newTime = Math.min(audioRef.current.currentTime + skipTime, audioRef.current.duration || 0);
-              audioRef.current.currentTime = newTime;
-              usePlayerStore.getState().setProgress(newTime);
-            }
+            const skipTime = details.seekOffset || 10;
+            const newTime = Math.min(audioObj.currentTime + skipTime, audioObj.duration || 0);
+            audioObj.currentTime = newTime;
+            usePlayerStore.getState().setProgress(newTime);
           });
         } catch (e) {
           console.error("Failed to set mediaSession metadata", e);
@@ -111,83 +208,6 @@ export default function GlobalAudioPlayer() {
     }
   }, [currentTrack]);
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const curTime = audioRef.current.currentTime;
-      const dur = audioRef.current.duration;
-      setProgress(curTime);
-
-      if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur > 0 && !isNaN(dur) && !isNaN(curTime)) {
-        try {
-          navigator.mediaSession.setPositionState({
-            duration: dur,
-            playbackRate: audioRef.current.playbackRate,
-            position: curTime
-          });
-        } catch(e) {
-          // ignore
-        }
-      }
-
-      // Scrobble at 50% or 4 minutes, whichever is smaller
-      if (currentTrack && dur > 0 && !scrobbledTrackIds.current.has(currentTrack.id)) {
-        const scrobblePoint = Math.min(dur / 2, 240);
-        if (curTime >= scrobblePoint) {
-          scrobbledTrackIds.current.add(currentTrack.id);
-          fetchApi('scrobble', { id: currentTrack.id, submission: true }).catch(console.error);
-        }
-      }
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const handleEnded = () => {
-    if (currentTrack && !scrobbledTrackIds.current.has(currentTrack.id)) {
-      scrobbledTrackIds.current.add(currentTrack.id);
-      fetchApi('scrobble', { id: currentTrack.id, submission: true }).catch(console.error);
-    }
-    
-    // Synchronously set src and play to keep background audio session alive on iOS/Android
-    const repeatMode = usePlayerStore.getState().repeatMode;
-    let nextTrack = null;
-    
-    if (repeatMode === 'one') {
-      nextTrack = currentTrack;
-    } else if (currentIndex < queue.length - 1) {
-      nextTrack = queue[currentIndex + 1];
-    } else if (repeatMode === 'all') {
-      nextTrack = queue[0];
-    }
-    
-    if (nextTrack && audioRef.current) {
-      const nextUrl = getApiUrl('stream', { id: nextTrack.id });
-      if (repeatMode === 'one') {
-        audioRef.current.currentTime = 0;
-      } else {
-        audioRef.current.src = nextUrl;
-      }
-      audioRef.current.play().catch(e => console.error("Background play failed:", e));
-    }
-
-    playNext();
-  };
-
-  // If there's no track, don't render an src
-  const streamUrl = currentTrack ? getApiUrl('stream', { id: currentTrack.id }) : '';
-
-  return (
-    <audio
-      ref={audioRef}
-      src={streamUrl}
-      onTimeUpdate={handleTimeUpdate}
-      onLoadedMetadata={handleLoadedMetadata}
-      onEnded={handleEnded}
-      preload="auto"
-    />
-  );
+  // Render nothing, Audio is managed completely in JS
+  return null;
 }

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
-export const usePlayerStore = create((set, get) => ({
+export const usePlayerStore = create(
+  persist(
+    (set, get) => ({
   queue: [],
   originalQueue: [], // to restore order when shuffle is toggled off
   currentIndex: -1,
@@ -159,4 +162,15 @@ export const usePlayerStore = create((set, get) => ({
     const nextMode = repeatMode === 'none' ? 'all' : repeatMode === 'all' ? 'one' : 'none';
     set({ repeatMode: nextMode });
   }
+}), {
+  name: 'pulsar-player-state',
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({
+    queue: state.queue,
+    originalQueue: state.originalQueue,
+    currentIndex: state.currentIndex,
+    volume: state.volume,
+    isShuffle: state.isShuffle,
+    repeatMode: state.repeatMode
+  }),
 }));

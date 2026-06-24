@@ -18,7 +18,7 @@ It aims to bridge desktop environments and mobile experiences from a single code
 - **Advanced Multi-Queue Tracking Engine:** Retains multiple independent queue contexts (e.g., switching between an audiobook and a music playlist) maintaining exact progress offsets and state matrices locally.
 - **Smart Filtering Engine:** Evaluates declarative criteria locally against IndexedDB, executing complex relational searches without slamming the backend server.
 - **Offline-First Caching Architecture:** Stores target streams natively via Service Worker `CacheStorage` mechanisms based on background cellular vs. Wi-Fi network lifecycles.
-- **Last.fm Artwork Abstraction:** Bypasses standard Navidrome cover art endpoints to extract and stream high-quality assets strictly from the Last.fm REST API.
+- **Native Metadata Integration:** Fully leverages OpenSubsonic API endpoints for native album metadata alongside a zero-auth MusicBrainz integration for dynamic, chronologically accurate artist news and releases.
 
 ## Development Setup
 
@@ -38,11 +38,27 @@ npm run dev
 
 ## Deployment
 
-Pulsar is designed for containerized deployment, ensuring proxy-agnostic topologies and environmental consistency. The included `docker-compose.yml` builds and serves the standalone Pulsar PWA interface (port 8080). You provide your own external Navidrome URL upon logging in.
+Pulsar uses a streamlined, containerized deployment using pre-built images from the GitHub Container Registry (GHCR) so you never have to compile code on your host machine.
+
+1. **Configure Environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   *Edit `.env` to configure your specific settings (e.g., `PULSAR_PORT`, `MUSIC_DIR`).*
+
+2. **Start the container stack:**
+   ```bash
+   docker-compose up -d
+   ```
+
+By default, the UI service binds to the host's port `80`. You can easily change this via `PULSAR_PORT` in your `.env` file. If placing the application behind an external reverse proxy (like Nginx Proxy Manager, Traefik, or Caddy), map your upstream configurations directly to the host IP and your configured port.
+
+### Updating Pulsar
+
+To update to the latest version of Pulsar, simply run the included update script:
 
 ```bash
-# Build and run the entire stack locally
-docker compose up -d --build
+./update.sh
 ```
 
-By default, the UI service binds to the host's port `8080`. If placing the application behind an external reverse proxy (like Nginx Proxy Manager, Traefik, or Caddy), map your upstream configurations directly to the host IP and the exposed port (8080).
+This script will gracefully pull the latest git configurations, seamlessly pull the latest pre-compiled image from GHCR, and restart your containers in the background without any git conflicts.

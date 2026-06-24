@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 Pulsar_Architecture_Whitepaper.md
+
+# Local env files
+.env
+.env.local

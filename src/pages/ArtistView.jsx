@@ -15,6 +15,8 @@ export default function ArtistView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [mbReleases, setMbReleases] = useState([]);
+  const [mbLoading, setMbLoading] = useState(false);
 
   useEffect(() => {
     async function loadArtist() {
@@ -36,6 +38,32 @@ export default function ArtistView() {
   }, [id]);
 
   const artist = dbArtist || artistData;
+
+  useEffect(() => {
+    async function loadMB() {
+      if (!artist?.name) return;
+      setMbLoading(true);
+      try {
+        const res = await fetch(`https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artist.name)}&fmt=json`, { headers: { 'User-Agent': 'PulsarApp/1.0.0 ( github.com/pulsar )' }});
+        const data = await res.json();
+        if (data.artists && data.artists.length > 0) {
+          const mbid = data.artists[0].id;
+          const res2 = await fetch(`https://musicbrainz.org/ws/2/release-group?artist=${mbid}&limit=100&fmt=json`, { headers: { 'User-Agent': 'PulsarApp/1.0.0 ( github.com/pulsar )' }});
+          const data2 = await res2.json();
+          const releases = (data2['release-groups'] || [])
+            .filter(r => r['first-release-date'] && (r['primary-type'] === 'Album' || r['primary-type'] === 'EP' || r['primary-type'] === 'Single'))
+            .sort((a, b) => new Date(b['first-release-date']) - new Date(a['first-release-date']))
+            .slice(0, 6);
+          setMbReleases(releases);
+        }
+      } catch (err) {
+        console.error("MusicBrainz fetch failed:", err);
+      } finally {
+        setMbLoading(false);
+      }
+    }
+    loadMB();
+  }, [artist?.name]);
 
   if (loading) {
     return (
@@ -105,13 +133,29 @@ export default function ArtistView() {
             </div>
           )}
 
-          {/* Placeholder for News Feed */}
+          {/* MusicBrainz Latest Releases */}
           <div className="bg-white/5 rounded-2xl p-6 border border-white/5">
-            <h3 className="font-bold text-white mb-3 uppercase tracking-wider text-xs text-primary">Artist News & Tours</h3>
-            <div className="text-white/50 text-sm space-y-4">
-              <p>Last.fm unfortunately deprecated and removed their Events & Tour API several years ago.</p>
-              <p>To implement this, would you like to integrate a service like <strong>Songkick</strong> / <strong>Ticketmaster</strong> (requires a free API key), or use a news aggregator RSS feed?</p>
-            </div>
+            <h3 className="font-bold text-white mb-4 uppercase tracking-wider text-xs text-primary">Latest Releases</h3>
+            {mbLoading ? (
+              <div className="flex justify-center p-4">
+                <PulsarLogo className="w-6 h-6 text-white/20 animate-[spin_15s_linear_infinite]" />
+              </div>
+            ) : mbReleases.length > 0 ? (
+              <div className="space-y-4">
+                {mbReleases.map(rel => (
+                  <div key={rel.id} className="flex flex-col gap-1 border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                    <span className="font-medium text-white/90 text-sm leading-tight">{rel.title}</span>
+                    <div className="flex items-center gap-2 text-xs text-white/40">
+                      <span className="uppercase tracking-wider font-semibold text-white/30">{rel['primary-type']}</span>
+                      <span>•</span>
+                      <span>{rel['first-release-date']}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/40 text-sm">No recent releases found.</p>
+            )}
           </div>
         </div>
       </div>
